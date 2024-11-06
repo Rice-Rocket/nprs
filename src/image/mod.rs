@@ -1,8 +1,11 @@
 use std::{fs::File, io, path::Path};
 
+use format::PixelFormat;
 use glam::UVec2;
+use pixel::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, rgba::Rgba, Pixel};
 
-use crate::pixel::{Pixel, PixelFormat};
+pub mod pixel;
+pub mod format;
 
 pub struct Image<const CHANNELS: usize, F, P>
 where
@@ -63,20 +66,40 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
 
         let formatted_im_data: Vec<F> = im_data.chunks_exact(chunk_size).map(|bytes| F::from_bytes(bytes)).collect();
 
-        match info.color_type {
-            png::ColorType::Grayscale => assert!(CHANNELS == 1),
-            png::ColorType::GrayscaleAlpha => assert!(CHANNELS == 2),
-            png::ColorType::Rgb => assert!(CHANNELS == 3),
-            png::ColorType::Rgba => assert!(CHANNELS == 4),
+        let pixels = match info.color_type {
+            png::ColorType::Grayscale => {
+                formatted_im_data
+                    .into_iter()
+                    .map(|channels| P::from_pixel(Luma::<F>::from_channels([channels])))
+                    .collect()
+            },
+            png::ColorType::GrayscaleAlpha => {
+                formatted_im_data
+                    .chunks_exact(2)
+                    .flat_map(<[F; 2]>::try_from)
+                    .map(|channels| P::from_pixel(LumaAlpha::<F>::from_channels(channels)))
+                    .collect()
+            },
+            png::ColorType::Rgb => {
+                formatted_im_data
+                    .chunks_exact(3)
+                    .flat_map(<[F; 3]>::try_from)
+                    .map(|channels| P::from_pixel(Rgb::<F>::from_channels(channels)))
+                    .collect()
+            },
+            png::ColorType::Rgba => {
+                formatted_im_data
+                    .chunks_exact(4)
+                    .flat_map(<[F; 4]>::try_from)
+                    .map(|channels| P::from_pixel(Rgba::<F>::from_channels(channels)))
+                    .collect()
+            },
             png::ColorType::Indexed => unreachable!(),
         };
         
         Ok(Self::new(
             UVec2::new(info.width, info.height),
-            formatted_im_data
-                .chunks_exact(CHANNELS)
-                .flat_map(<[F; CHANNELS]>::try_from)
-                .map(|channels| P::from_channels(channels)).collect(),
+            pixels,
         ))
     }
 }

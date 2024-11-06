@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 glam = "0.29.2"
 png = "0.17.13"
+half = "2.4.1"

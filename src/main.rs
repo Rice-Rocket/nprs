@@ -1,9 +1,7 @@
-use image::Image;
-use pixel::{Luma, Rgba};
+use image::{pixel::luma::Luma, Image};
 
 mod image;
-mod pixel;
 
 fn main() {
-    let image = Image::<4, u8, Rgba<u8>>::read("images/pagoda.png").unwrap();
+    let image = Image::<1, f32, Luma<f32>>::read("images/pagoda.png").unwrap();
 }
