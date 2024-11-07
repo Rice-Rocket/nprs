@@ -18,6 +18,10 @@ impl<F: PixelFormat> Pixel<3> for Rgb<F> {
             b: channels[2],
         }
     }
+    
+    fn channels(&self) -> [Self::Format; 3] {
+        [self.r, self.g, self.b]
+    }
 }
 
 impl<F: PixelFormat> FromPixel<Luma<F>> for Rgb<F> {

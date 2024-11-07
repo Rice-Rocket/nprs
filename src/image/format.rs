@@ -1,7 +1,11 @@
 use half::f16;
 
 pub trait PixelFormat: Sized + Clone + Copy {
+    fn bytes() -> u8;
+
     fn from_bytes(bytes: &[u8]) -> Self;
+
+    fn to_bytes(self) -> Vec<u8>;
 
     fn from_scaled_float(v: f32) -> Self;
 
@@ -9,8 +13,16 @@ pub trait PixelFormat: Sized + Clone + Copy {
 }
 
 impl PixelFormat for u8 {
+    fn bytes() -> u8 {
+        1
+    }
+
     fn from_bytes(bytes: &[u8]) -> Self {
         bytes[0]
+    }
+
+    fn to_bytes(self) -> Vec<u8> {
+        vec![self]
     }
 
     fn from_scaled_float(v: f32) -> Self {
@@ -23,12 +35,20 @@ impl PixelFormat for u8 {
 }
 
 impl PixelFormat for f16 {
+    fn bytes() -> u8 {
+        2
+    }
+
     fn from_bytes(bytes: &[u8]) -> Self {
         match bytes.len() {
             1 => f16::from_f32(bytes[0].to_scaled_float()),
             2 => f16::from_le_bytes([bytes[0], bytes[1]]),
             _ => panic!(),
         }
+    }
+
+    fn to_bytes(self) -> Vec<u8> {
+        ((self.to_f32().clamp(0.0, 1.0) * u16::MAX as f32) as u16).to_be_bytes().to_vec()
     }
 
     fn from_scaled_float(v: f32) -> Self {
@@ -41,6 +61,10 @@ impl PixelFormat for f16 {
 }
 
 impl PixelFormat for f32 {
+    fn bytes() -> u8 {
+        4
+    }
+
     fn from_bytes(bytes: &[u8]) -> Self {
         match bytes.len() {
             1 => (bytes[0] as f32) / 255.0,
@@ -48,6 +72,10 @@ impl PixelFormat for f32 {
             4 => f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
             _ => panic!(),
         }
+    }
+
+    fn to_bytes(self) -> Vec<u8> {
+        self.to_be_bytes().to_vec()
     }
 
     fn from_scaled_float(v: f32) -> Self {

@@ -10,6 +10,10 @@ impl<F: PixelFormat> Pixel<1> for Luma<F> {
     fn from_channels(channels: [Self::Format; 1]) -> Self {
         Luma(channels[0])
     }
+
+    fn channels(&self) -> [Self::Format; 1] {
+        [self.0]
+    }
 }
 
 impl<F: PixelFormat> FromPixel<Luma<F>> for Luma<F> {
