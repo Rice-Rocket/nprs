@@ -25,16 +25,6 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         }
     }
 
-    pub fn flat_map<Convert, ToPixel, ToFormat, I>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
-    where
-        ToPixel: Pixel<CHANNELS, Format = ToFormat>,
-        Convert: Fn(&P) -> I,
-        ToFormat: PixelFormat,
-        I: IntoIterator<Item = ToPixel>,
-    {
-        Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.iter().flat_map(f).collect())
-    }
-
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
@@ -45,13 +35,16 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     }
 
     pub fn to_format<ToFormat: PixelFormat, ToPixel: Pixel<CHANNELS, Format = ToFormat>>(&self) -> Image<CHANNELS, ToFormat, ToPixel> {
-        self.flat_map(|pixel| -> Option<_> {
-            let channels: [ToFormat; CHANNELS] = pixel.channels().into_iter()
+        self.map(|pixel| {
+            let channels: Result<[ToFormat; CHANNELS], _> = pixel.channels().into_iter()
                 .map(|f| ToFormat::from_scaled_float(f.to_scaled_float()))
                 .collect::<Vec<ToFormat>>()
-                .try_into().ok()?;
+                .try_into();
 
-            Some(ToPixel::from_channels(channels))
+            match channels {
+                Ok(v) => ToPixel::from_channels(v),
+                Err(_) => ToPixel::from_channels([ToFormat::from_scaled_float(0.0); CHANNELS]),
+            }
         })
     }
 
