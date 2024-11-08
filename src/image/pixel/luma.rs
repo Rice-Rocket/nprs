@@ -2,6 +2,7 @@ use crate::image::format::PixelFormat;
 
 use super::{luma_alpha::LumaAlpha, rgb::Rgb, rgba::Rgba, FromPixel, Pixel};
 
+#[derive(Clone, Copy)]
 pub struct Luma<F: PixelFormat>(pub F);
 
 impl<F: PixelFormat> Pixel<1> for Luma<F> {

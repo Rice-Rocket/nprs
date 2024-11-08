@@ -8,6 +8,7 @@ use thiserror::Error;
 pub mod pixel;
 pub mod format;
 
+#[derive(Clone)]
 pub struct Image<const CHANNELS: usize, F, P>
 where
     F: PixelFormat,
@@ -21,6 +22,13 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     pub fn new(resolution: UVec2, pixels: Vec<P>) -> Image<CHANNELS, F, P> {
         Self {
             pixels,
+            resolution,
+        }
+    }
+
+    pub fn new_fill(resolution: UVec2, pixel: P) -> Image<CHANNELS, F, P> {
+        Self {
+            pixels: vec![pixel; (resolution.x * resolution.y) as usize],
             resolution,
         }
     }

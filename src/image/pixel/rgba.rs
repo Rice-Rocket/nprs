@@ -2,11 +2,18 @@ use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, FromPixel, Pixel};
 
+#[derive(Clone, Copy)]
 pub struct Rgba<F: PixelFormat> {
     pub r: F,
     pub g: F,
     pub b: F,
     pub a: F,
+}
+
+impl<F: PixelFormat> Rgba<F> {
+    pub fn new(r: F, g: F, b: F, a: F) -> Rgba<F> {
+        Rgba::<F> { r, g, b, a }
+    }
 }
 
 impl<F: PixelFormat> Pixel<4> for Rgba<F> {

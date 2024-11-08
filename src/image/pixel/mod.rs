@@ -15,6 +15,7 @@ pub trait Pixel<const CHANNELS: usize>:
     + FromPixel<LumaAlpha<Self::Format>>
     + FromPixel<Rgb<Self::Format>>
     + FromPixel<Rgba<Self::Format>>
+    + Clone + Copy
 {
     type Format: PixelFormat;
 
