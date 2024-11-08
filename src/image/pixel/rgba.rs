@@ -11,8 +11,19 @@ pub struct Rgba<F: PixelFormat> {
 }
 
 impl<F: PixelFormat> Rgba<F> {
+    #[inline]
     pub fn new(r: F, g: F, b: F, a: F) -> Rgba<F> {
         Rgba::<F> { r, g, b, a }
+    }
+
+    #[inline]
+    pub fn splat(v: F) -> Rgba<F> {
+        Rgba::<F> { r: v, g: v, b: v, a: F::from_scaled_float(1.0) }
+    }
+
+    #[inline]
+    pub fn splat_with_alpha(v: F) -> Rgba<F> {
+        Rgba::<F> { r: v, g: v, b: v, a: v }
     }
 }
 

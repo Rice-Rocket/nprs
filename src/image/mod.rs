@@ -33,6 +33,10 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         }
     }
 
+    pub fn resolution(&self) -> UVec2 {
+        self.resolution
+    }
+
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
@@ -40,6 +44,13 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         ToFormat: PixelFormat,
     {
         Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.iter().map(f).collect())
+    }
+
+    pub fn map_in_place<Convert>(&mut self, f: Convert)
+    where
+        Convert: Fn(&mut P)
+    {
+        self.pixels.iter_mut().for_each(f);
     }
 
     pub fn to_format<ToFormat: PixelFormat, ToPixel: Pixel<CHANNELS, Format = ToFormat>>(&self) -> Image<CHANNELS, ToFormat, ToPixel> {

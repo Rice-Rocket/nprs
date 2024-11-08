@@ -1,12 +1,11 @@
-use std::collections::{hash_map::Entry, HashMap, HashSet, VecDeque};
-use itertools::Itertools;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use glam::UVec2;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
 
-pub struct RenderGraph {
-    pub main_image: Image<4, f32, Rgba<f32>>,
+pub struct RenderGraph<'a> {
+    pub main_image: &'a mut Image<4, f32, Rgba<f32>>,
     pub aux_images: HashMap<u32, Image<4, f32, Rgba<f32>>>,
 
     /// The edges of the graph, where a node is directed towards its dependencies.
@@ -20,17 +19,17 @@ pub struct RenderGraph {
     resolution: UVec2,
 }
 
-impl RenderGraph {
-    pub fn new(image_resolution: UVec2) -> Self {
+impl<'a> RenderGraph<'a> {
+    pub fn new(target: &'a mut Image<4, f32, Rgba<f32>>) -> Self {
         RenderGraph {
-            main_image: Image::new_fill(image_resolution, Rgba::new(0.0, 0.0, 0.0, 0.0)),
+            resolution: target.resolution(),
+            main_image: target,
             aux_images: HashMap::new(),
             edges: HashMap::new(),
             passes: HashMap::new(),
             names: HashMap::new(),
             root: 0,
-            node_count: 0,
-            resolution: image_resolution,
+            node_count: 1,
         }
     }
 
@@ -46,11 +45,25 @@ impl RenderGraph {
     }
 
     pub fn add_node<P: Pass + 'static>(&mut self, node: P) {
-        for dependency in node.dependencies() {
-            let Some(&name) = self.names.get(dependency) else { continue };
-            self.add_edge(name, self.node_count);
+        if self.names.contains_key(P::name()) {
+            // TODO: somehow allow multiple of the same node type, but add new `target` so that
+            // each node has a specific image that it writes to
+            panic!("graph already contains node {}", P::name());
         }
 
+        let dependencies = node.dependencies();
+        let n_dependencies = dependencies.len();
+
+        if n_dependencies == 0 {
+            self.add_edge(self.node_count, 0);
+        }
+
+        for dependency in dependencies {
+            let Some(&id) = self.names.get(dependency) else { continue };
+            self.add_edge(self.node_count, id);
+        }
+
+        self.names.insert(P::name(), self.node_count);
         self.passes.insert(self.node_count, Box::new(node));
         self.node_count += 1;
     }
@@ -66,9 +79,9 @@ impl RenderGraph {
             visit_stack.push_back(node);
 
             for &connection in self.connections(node) {
-                if self.is_cyclic(connection, visited, visit_stack) {
-                    return true;
-                } else if visit_stack.contains(&connection) {
+                if self.is_cyclic(connection, visited, visit_stack)
+                    || visit_stack.contains(&connection)
+                {
                     return true;
                 }
             }
@@ -134,8 +147,8 @@ impl RenderGraph {
     fn render_node(&mut self, node: u32) {
         let mut aux_images = Vec::new();
 
-        if let Some(connections) = self.edges.get(&self.root) {
-            for &dependency in connections.clone().iter() {
+        if let Some(connections) = self.edges.get(&node) {
+            for &dependency in connections.clone().iter().filter(|&&id| id != 0) {
                 self.render_node(dependency);
 
                 // SAFETY: all mutable borrows of self.aux_images should be dropped at this point.
@@ -147,16 +160,16 @@ impl RenderGraph {
 
         // SAFETY: a node will never be dependent on itself, meaning the node's aux image
         // (corresponding to this node) will never be borrowed by this point.
-        let mut target = self.aux_images.get_mut(&node).unwrap();
-        let pass = self.passes.get(&self.root).unwrap();
-        pass.apply(&mut target, &aux_images);
+        let target = self.aux_images.get_mut(&node).unwrap();
+        let pass = self.passes.get(&node).unwrap();
+        pass.apply(target, &aux_images);
     }
 
-    pub fn render(&mut self) -> Image<4, f32, Rgba<f32>> {
+    pub fn render(&mut self) {
         let mut aux_images = Vec::new();
 
         if let Some(connections) = self.edges.get(&self.root) {
-            for &dependency in connections.clone().iter() {
+            for &dependency in connections.clone().iter().filter(|&&id| id != 0) {
                 self.render_node(dependency);
 
                 // SAFETY: all mutable borrows of self.aux_images should be dropped at this point.
@@ -167,8 +180,6 @@ impl RenderGraph {
         }
 
         let pass = self.passes.get(&self.root).unwrap();
-        pass.apply(&mut self.main_image, &aux_images);
-
-        self.main_image.clone()
+        pass.apply(self.main_image, &aux_images);
     }
 }
