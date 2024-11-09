@@ -25,13 +25,21 @@ impl<M: LuminanceMethod> Pass for Luminance<M> {
         &[]
     }
 
-    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
-        target.map_in_place(|pixel| {
-            let l = M::luminance(pixel.r, pixel.g, pixel.b);
+    fn target(&self) -> &'static str {
+        "tangent_flow_map"
+    }
+
+    fn auxiliary_images(&self) -> &[&'static str] {
+        &["main"]
+    }
+
+    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+        let main_image = aux_images[0];
+
+        target.map_in_place_with_positions(|pixel, pos| {
+            let main_pixel = main_image.load(pos);
+            let l = M::luminance(main_pixel.r, main_pixel.g, main_pixel.b);
             pixel.r = l;
-            pixel.g = l;
-            pixel.b = l;
-            pixel.a = 1.0;
         });
     }
 }

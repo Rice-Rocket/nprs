@@ -18,17 +18,23 @@ impl Pass for Sobel {
     fn dependencies(&self) -> &[&'static str] {
         &["luminance"]
     }
+    
+    fn target(&self) -> &'static str {
+        "tangent_flow_map"
+    }
 
-    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, dependencies: &[&Image<4, f32, Rgba<f32>>]) {
-        let luminance = dependencies[0];
+    fn auxiliary_images(&self) -> &[&'static str] {
+        &[]
+    }
 
-        let gx = luminance.convolve([
+    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
+        let gx = target.convolve([
             [-0.125, 0.0, 0.125],
             [-0.25, 0.0, 0.25],
             [-0.125, 0.0, 0.125],
         ]);
 
-        let gy = luminance.convolve([
+        let gy = target.convolve([
             [-0.125, 0.0, 0.125],
             [-0.25, 0.0, 0.25],
             [-0.125, 0.0, 0.125],
