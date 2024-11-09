@@ -1,6 +1,17 @@
+use std::ops::{Add, Div, Mul, Sub};
+
 use half::f16;
 
-pub trait PixelFormat: Sized + Clone + Copy {
+pub trait PixelFormat: 
+    Add<Self, Output = Self>
+    + Sub<Self, Output = Self>
+    + Mul<Self, Output = Self>
+    + Div<Self, Output = Self>
+    + Sized + Clone + Copy
+{
+    const BLACK: Self;
+    const WHITE: Self;
+
     fn bytes() -> u8;
 
     fn from_bytes(bytes: &[u8]) -> Self;
@@ -13,6 +24,9 @@ pub trait PixelFormat: Sized + Clone + Copy {
 }
 
 impl PixelFormat for u8 {
+    const BLACK: Self = 0;
+    const WHITE: Self = 255;
+
     fn bytes() -> u8 {
         1
     }
@@ -35,6 +49,9 @@ impl PixelFormat for u8 {
 }
 
 impl PixelFormat for f16 {
+    const BLACK: Self = f16::from_f32_const(0.0);
+    const WHITE: Self = f16::from_f32_const(1.0);
+
     fn bytes() -> u8 {
         2
     }
@@ -61,6 +78,9 @@ impl PixelFormat for f16 {
 }
 
 impl PixelFormat for f32 {
+    const BLACK: Self = 0.0;
+    const WHITE: Self = 1.0;
+
     fn bytes() -> u8 {
         4
     }

@@ -1,6 +1,6 @@
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::luminance::{Luminance, LuminanceFastPerceivedMethod};
+use pass::{luminance::{Luminance, LuminanceFastPerceivedMethod}, sobel::Sobel};
 use render_graph::RenderGraph;
 
 mod pass;
@@ -13,6 +13,7 @@ fn main() {
     let mut render_graph = RenderGraph::new(&mut image);
 
     render_graph.add_node(Luminance::<LuminanceFastPerceivedMethod>::new());
+    render_graph.add_node(Sobel {});
 
     render_graph.verify();
     render_graph.render();

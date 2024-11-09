@@ -139,7 +139,7 @@ impl<'a> RenderGraph<'a> {
         for (_node, pass) in self.passes.iter() {
             for &dependency in pass.dependencies() {
                 let Some(&dependency_id) = self.names.get(dependency) else { continue };
-                self.aux_images.insert(dependency_id, Image::new_fill(self.resolution, Rgba::new(0.0, 0.0, 0.0, 0.0)));
+                self.aux_images.insert(dependency_id, self.main_image.clone());
             }
         }
     }

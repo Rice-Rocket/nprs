@@ -1,6 +1,7 @@
 use crate::image::{pixel::rgba::Rgba, Image};
 
 pub mod luminance;
+pub mod sobel;
 
 pub trait Pass {
     fn name() -> &'static str

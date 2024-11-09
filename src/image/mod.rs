@@ -1,12 +1,14 @@
 use std::{fs::File, path::Path};
 
 use format::PixelFormat;
-use glam::UVec2;
+use glam::{IVec2, UVec2};
 use pixel::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, rgba::Rgba, Pixel};
 use thiserror::Error;
+use wrap_mode::WrapMode2D;
 
 pub mod pixel;
 pub mod format;
+pub mod wrap_mode;
 
 #[derive(Clone)]
 pub struct Image<const CHANNELS: usize, F, P>
@@ -37,6 +39,24 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.resolution
     }
 
+    pub fn sample(&self, p: IVec2, wrap_mode: WrapMode2D) -> P {
+        if let Some(p) = wrap_mode.remap(p, self.resolution.as_ivec2()) {
+            self.pixels[(p.y * self.resolution.x + p.x) as usize]
+        } else {
+            P::BLACK
+        }
+    }
+
+    pub fn load(&self, p: UVec2) -> P {
+        assert!(p.x < self.resolution.x && p.y < self.resolution.y);
+        self.pixels[(p.y * self.resolution.x + p.x) as usize]
+    }
+
+    pub fn store(&mut self, p: UVec2, c: P) {
+        assert!(p.x < self.resolution.x && p.y < self.resolution.y);
+        self.pixels[(p.y * self.resolution.x + p.x) as usize] = c;
+    }
+
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
@@ -51,6 +71,17 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         Convert: Fn(&mut P)
     {
         self.pixels.iter_mut().for_each(f);
+    }
+
+    pub fn map_in_place_with_positions<Convert>(&mut self, f: Convert)
+    where
+        Convert: Fn(&mut P, UVec2)
+    {
+        self.pixels
+            .iter_mut()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
+            .for_each(|(pixel, pos)| f(pixel, pos));
     }
 
     pub fn to_format<ToFormat: PixelFormat, ToPixel: Pixel<CHANNELS, Format = ToFormat>>(&self) -> Image<CHANNELS, ToFormat, ToPixel> {
@@ -179,6 +210,32 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
 
         let mut writer = encoder.write_header()?;
         Ok(writer.write_image_data(&data)?)
+    }
+}
+
+impl<const CHANNELS: usize, P: Pixel<CHANNELS, Format = f32>> Image<CHANNELS, f32, P> {
+    // TODO: FFT-based convolution algorithm
+    pub fn convolve<const N: usize, const M: usize>(&self, kernel: [[f32; N]; M]) -> Image<CHANNELS, f32, P> {
+        let mut image = Image::<CHANNELS, f32, P>::new_fill(self.resolution, P::BLACK);
+
+        for x in 0..self.resolution.x {
+            for y in 0..self.resolution.y {
+                let mut c = P::BLACK;
+
+                for i in -(N as i32 / 2)..=(N as i32 / 2) {
+                    for j in -(M as i32 / 2)..=(M as i32 / 2) {
+                        let p = IVec2::new(x as i32 + i, y as i32 + j);
+                        let v = self.sample(p, WrapMode2D::CLAMP);
+                        let w = kernel[(j + M as i32 / 2) as usize][(i + N as i32 / 2) as usize];
+                        c = c + (v * w);
+                    }
+                }
+
+                image.store(UVec2::new(x, y), c);
+            }
+        }
+
+        image
     }
 }
 

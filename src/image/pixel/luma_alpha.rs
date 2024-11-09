@@ -2,7 +2,7 @@ use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, rgb::Rgb, rgba::Rgba, FromPixel, Pixel};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct LumaAlpha<F: PixelFormat> {
     pub v: F,
     pub a: F,
@@ -10,6 +10,8 @@ pub struct LumaAlpha<F: PixelFormat> {
 
 impl<F: PixelFormat> Pixel<2> for LumaAlpha<F> {
     type Format = F;
+
+    const BLACK: Self = Self { v: F::BLACK, a: F::BLACK };
 
     fn from_channels(channels: [Self::Format; 2]) -> Self {
         LumaAlpha {
@@ -26,8 +28,8 @@ impl<F: PixelFormat> Pixel<2> for LumaAlpha<F> {
 impl<F: PixelFormat> FromPixel<Luma<F>> for LumaAlpha<F> {
     fn from_pixel(pixel: Luma<F>) -> Self {
         LumaAlpha {
-            v: pixel.0,
-            a: F::from_scaled_float(1.0),
+            v: pixel.v,
+            a: F::WHITE,
         }
     }
 }
