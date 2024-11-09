@@ -1,6 +1,6 @@
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{merge::Merge, tfm::{sobel::Sobel, SobelPreBlur}};
+use pass::{merge::Merge, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};
 use render_graph::RenderGraph;
 
 mod pass;
@@ -14,7 +14,9 @@ fn main() {
 
     render_graph.add_node(SobelPreBlur::new(1));
     render_graph.add_node(Sobel {});
-    render_graph.add_node(Merge::new("tangent_flow_map", vec!["sobel"]).ensure_opaque());
+    render_graph.add_node(SobelPostBlur::new(0.1));
+    render_graph.add_node(TangentFlowStructureTensor {});
+    render_graph.add_node(Merge::new("tangent_flow_map", vec!["tfm_structure_tensor"]).ensure_opaque());
 
     render_graph.verify();
     render_graph.render();

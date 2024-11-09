@@ -4,6 +4,7 @@ pub mod tfm;
 pub mod luminance;
 pub mod merge;
 pub mod box_blur;
+pub mod gaussian_blur;
 
 pub trait Pass<'a> {
     fn name(&self) -> &'a str;

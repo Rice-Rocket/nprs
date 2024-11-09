@@ -1,3 +1,5 @@
+use glam::Vec3;
+
 use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, FromPixel, Pixel};
@@ -41,6 +43,12 @@ impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     
     fn channels(&self) -> [Self::Format; 3] {
         [self.r, self.g, self.b]
+    }
+}
+
+impl Into<Vec3> for Rgb<f32> {
+    fn into(self) -> Vec3 {
+        Vec3::new(self.r, self.g, self.b)
     }
 }
 
