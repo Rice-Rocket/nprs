@@ -2,18 +2,18 @@ use super::{box_blur::BoxBlur, SpecializedPass};
 
 pub mod sobel;
 
-pub struct SobelPreBlur<'a, const KERNEL_SIZE: usize>(BoxBlur<'a, KERNEL_SIZE>);
+pub struct SobelPreBlur<'a>(BoxBlur<'a>);
 
-impl<const KERNEL_SIZE: usize> SobelPreBlur<'_, KERNEL_SIZE> {
+impl SobelPreBlur<'_> {
     const NAME: &'static str = "sobel_pre_blur";
 
-    pub fn new() -> Self {
-        Self(BoxBlur::<KERNEL_SIZE>::new(Self::NAME, "tangent_flow_map", vec![]).with_source("main"))
+    pub fn new(kernel_radius: usize) -> Self {
+        Self(BoxBlur::new(Self::NAME, "tangent_flow_map", vec![], kernel_radius).with_source("main"))
     }
 }
 
-impl<'a, const KERNEL_SIZE: usize> SpecializedPass<'a> for SobelPreBlur<'a, KERNEL_SIZE> {
-    type Parent = BoxBlur<'a, KERNEL_SIZE>;
+impl<'a> SpecializedPass<'a> for SobelPreBlur<'a> {
+    type Parent = BoxBlur<'a>;
 
     fn parent(&self) -> &Self::Parent {
         &self.0

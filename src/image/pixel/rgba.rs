@@ -18,12 +18,17 @@ impl<F: PixelFormat> Rgba<F> {
 
     #[inline]
     pub fn splat(v: F) -> Rgba<F> {
-        Rgba::<F> { r: v, g: v, b: v, a: F::WHITE }
+        Self::new(v, v, v, F::WHITE)
     }
 
     #[inline]
     pub fn splat_with_alpha(v: F) -> Rgba<F> {
-        Rgba::<F> { r: v, g: v, b: v, a: v }
+        Self::new(v, v, v, v)
+    }
+
+    #[inline]
+    pub fn rgb(self) -> Rgb<F> {
+        Rgb::new(self.r, self.g, self.b)
     }
 }
 

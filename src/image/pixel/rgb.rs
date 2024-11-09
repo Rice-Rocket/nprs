@@ -9,6 +9,23 @@ pub struct Rgb<F: PixelFormat> {
     pub b: F,
 }
 
+impl<F: PixelFormat> Rgb<F> {
+    #[inline]
+    pub fn new(r: F, g: F, b: F) -> Rgb<F> {
+        Rgb::<F> { r, g, b }
+    }
+
+    #[inline]
+    pub fn splat(v: F) -> Rgb<F> {
+        Self::new(v, v, v)
+    }
+
+    #[inline]
+    pub fn dot(self, other: Self) -> F {
+        self.r * other.r + self.g * other.g + self.b * other.b
+    }
+}
+
 impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     type Format = F;
 

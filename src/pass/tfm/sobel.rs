@@ -1,3 +1,5 @@
+use glam::UVec2;
+
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
 
 pub struct Sobel {
@@ -26,17 +28,17 @@ impl<'a> Pass<'a> for Sobel {
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
-        let gx_image = target.convolve([
-            [-0.125, 0.0, 0.125],
-            [-0.25, 0.0, 0.25],
-            [-0.125, 0.0, 0.125],
-        ]);
+        let gx_image = target.convolve(&[
+            -0.125, 0.0, 0.125,
+            -0.25, 0.0, 0.25,
+            -0.125, 0.0, 0.125,
+        ], UVec2::splat(3));
 
-        let gy_image = target.convolve([
-            [-0.125, -0.25, -0.125],
-            [0.0, 0.0, 0.0],
-            [0.125, 0.25, 0.125],
-        ]);
+        let gy_image = target.convolve(&[
+            -0.125, -0.25, -0.125,
+            0.0, 0.0, 0.0,
+            0.125, 0.25, 0.125,
+        ], UVec2::splat(3));
 
         target.map_in_place_with_positions(|pixel, pos| {
             let gx = gx_image.load(pos);

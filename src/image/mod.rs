@@ -215,18 +215,21 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
 
 impl<const CHANNELS: usize, P: Pixel<CHANNELS, Format = f32>> Image<CHANNELS, f32, P> {
     // TODO: FFT-based convolution algorithm
-    pub fn convolve<const N: usize, const M: usize>(&self, kernel: [[f32; N]; M]) -> Image<CHANNELS, f32, P> {
+    pub fn convolve(&self, kernel: &[f32], kernel_size: UVec2) -> Image<CHANNELS, f32, P> {
+        assert!(kernel.len() as u32 == kernel_size.x * kernel_size.y);
+
+        let kernel_size = kernel_size.as_ivec2();
         let mut image = Image::<CHANNELS, f32, P>::new_fill(self.resolution, P::BLACK);
 
         for x in 0..self.resolution.x {
             for y in 0..self.resolution.y {
                 let mut c = P::BLACK;
 
-                for i in -(N as i32 / 2)..=(N as i32 / 2) {
-                    for j in -(M as i32 / 2)..=(M as i32 / 2) {
+                for i in -(kernel_size.x / 2)..=(kernel_size.x / 2) {
+                    for j in -(kernel_size.y / 2)..=(kernel_size.y / 2) {
                         let p = IVec2::new(x as i32 + i, y as i32 + j);
                         let v = self.sample(p, WrapMode2D::CLAMP);
-                        let w = kernel[(j + M as i32 / 2) as usize][(i + N as i32 / 2) as usize];
+                        let w = kernel[((j + kernel_size.y / 2) * kernel_size.x + (i + kernel_size.x / 2)) as usize];
                         c = c + (v * w);
                     }
                 }

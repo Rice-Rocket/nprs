@@ -1,9 +1,11 @@
+use glam::UVec2;
+
 use crate::image::{pixel::rgba::Rgba, Image};
 
 use super::Pass;
 
 /// A pass that performs a box blur on the `target` image.
-pub struct BoxBlur<'a, const KERNEL_SIZE: usize> {
+pub struct BoxBlur<'a> {
     /// The name of this pass.
     name: &'a str,
 
@@ -18,15 +20,21 @@ pub struct BoxBlur<'a, const KERNEL_SIZE: usize> {
 
     /// The passes to run before this pass.
     dependencies: Vec<&'a str>,
+
+    /// The size of the kernel.
+    kernel_size: usize,
 }
 
-impl<'a, const KERNEL_SIZE: usize> BoxBlur<'a, KERNEL_SIZE> {
+impl<'a> BoxBlur<'a> {
     pub fn new(
         name: &'a str,
         target: &'a str,
         dependencies: Vec<&'a str>,
+        kernel_radius: usize,
     ) -> Self {
-        Self { name, target, dependencies, source: None }
+        let kernel_size = 2 * kernel_radius + 1;
+
+        Self { name, target, dependencies, source: None, kernel_size }
     }
 
     pub fn with_source(mut self, source: &'a str) -> Self {
@@ -35,7 +43,7 @@ impl<'a, const KERNEL_SIZE: usize> BoxBlur<'a, KERNEL_SIZE> {
     }
 }
 
-impl<'a, const KERNEL_SIZE: usize> Pass<'a> for BoxBlur<'a, KERNEL_SIZE> {
+impl<'a> Pass<'a> for BoxBlur<'a> {
     fn name(&self) -> &'a str {
         self.name
     }
@@ -57,13 +65,13 @@ impl<'a, const KERNEL_SIZE: usize> Pass<'a> for BoxBlur<'a, KERNEL_SIZE> {
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        let w = 1.0 / (KERNEL_SIZE * KERNEL_SIZE) as f32;
+        let w = 1.0 / (self.kernel_size * self.kernel_size) as f32;
 
         if self.source.is_some() {
             let source = aux_images[0];
-            *target = source.convolve([[w; KERNEL_SIZE]; KERNEL_SIZE]);
+            *target = source.convolve(&vec![w; self.kernel_size], UVec2::splat(self.kernel_size as u32));
         } else {
-            *target = target.convolve([[w; KERNEL_SIZE]; KERNEL_SIZE]);
+            *target = target.convolve(&vec![w; self.kernel_size], UVec2::splat(self.kernel_size as u32));
         }
     }
 }
