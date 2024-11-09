@@ -3,22 +3,25 @@ use crate::image::{pixel::rgba::Rgba, Image};
 use super::Pass;
 
 /// A pass that merges an auxiliary image into the main image.
-pub struct Merge {
+pub struct Merge<'a> {
     /// The auxiliary image that will be merged.
-    pub target: &'static [&'static str],
+    pub target: &'a str,
 
     /// The passes to merge after.
-    pub dependencies: &'static [&'static str],
+    pub dependencies: Vec<&'a str>,
 
     /// Ensures the merged image is completely opaque.
     ensure_opaque: bool,
 }
 
-impl Merge {
+impl<'a> Merge<'a> {
     const NAME: &'static str = "merge";
 
-    pub const fn new(target: &'static [&'static str], dependencies: &'static [&'static str]) -> Merge {
-        Merge {
+    pub const fn new(
+        target: &'a str,
+        dependencies: Vec<&'a str>,
+    ) -> Self {
+        Self {
             target,
             dependencies,
             ensure_opaque: false,
@@ -32,21 +35,21 @@ impl Merge {
     }
 }
 
-impl<'a> Pass<'a> for Merge {
+impl<'a> Pass<'a> for Merge<'a> {
     fn name(&self) -> &'a str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> &[&'a str] {
-        self.dependencies
+    fn dependencies(&self) -> Vec<&'a str> {
+        self.dependencies.clone()
     }
 
     fn target(&self) -> &'a str {
         "main"
     }
 
-    fn auxiliary_images(&self) -> &[&'a str] {
-        self.target
+    fn auxiliary_images(&self) -> Vec<&'a str> {
+        vec![self.target]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {

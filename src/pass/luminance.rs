@@ -4,43 +4,77 @@ use crate::image::{pixel::rgba::Rgba, Image};
 
 use super::Pass;
 
-pub struct Luminance<M: LuminanceMethod> {
+/// A pass that computes the luminance of each pixel on the `target` image.
+pub struct Luminance<'a, M: LuminanceMethod> {
+    /// The name of this pass.
+    name: &'a str,
+
+    /// The image to write the resulting luminance to.
+    ///
+    /// If `source` is not specified, this is also the image used to compute the luminance,
+    /// resulting in the operation being performed in-place.
+    target: &'a str,
+
+    /// The image to compute the luminance of.
+    source: Option<&'a str>,
+
+    /// The passes to run before this pass.
+    dependencies: Vec<&'a str>,
+
     _phantom: PhantomData<M>,
 }
 
-impl<M: LuminanceMethod> Luminance<M> {
-    const NAME: &'static str = "luminance";
+impl<'a, M: LuminanceMethod> Luminance<'a, M> {
+    pub fn new(
+        name: &'a str,
+        target: &'a str,
+        dependencies: Vec<&'a str>,
+    ) ->Self {
+        Self { name, target, dependencies, source: None, _phantom: PhantomData }
+    }
 
-    pub fn new() -> Self {
-        Self { _phantom: PhantomData }
+    pub fn with_source(mut self, source: &'a str) -> Self {
+        self.source = Some(source);
+        self
     }
 }
 
-impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<M> {
+impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<'a, M> {
     fn name(&self) -> &'a str {
-        Self::NAME
+        self.name
     }
 
-    fn dependencies(&self) -> &[&'a str] {
-        &[]
+    fn dependencies(&self) -> Vec<&'a str> {
+        self.dependencies.clone()
     }
 
     fn target(&self) -> &'a str {
-        "tangent_flow_map"
+        self.target
     }
 
-    fn auxiliary_images(&self) -> &[&'a str] {
-        &["main"]
+    fn auxiliary_images(&self) -> Vec<&'a str> {
+        if let Some(source) = self.source {
+            vec![source]
+        } else {
+            vec![]
+        }
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        let main_image = aux_images[0];
+        if self.source.is_some() {
+            let source = aux_images[0];
 
-        target.map_in_place_with_positions(|pixel, pos| {
-            let main_pixel = main_image.load(pos);
-            let l = M::luminance(main_pixel.r, main_pixel.g, main_pixel.b);
-            pixel.r = l;
-        });
+            target.map_in_place_with_positions(|pixel, pos| {
+                let main_pixel = source.load(pos);
+                let l = M::luminance(main_pixel.r, main_pixel.g, main_pixel.b);
+                pixel.r = l;
+            });
+        } else {
+            target.map_in_place(|pixel| {
+                let l = M::luminance(pixel.r, pixel.g, pixel.b);
+                pixel.r = l;
+            })
+        }
     }
 }
 

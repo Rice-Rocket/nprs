@@ -1,6 +1,6 @@
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{box_blur::SobelPreBlur, luminance::{Luminance, LuminanceFastPerceivedMethod}, merge::Merge, sobel::Sobel};
+use pass::{merge::Merge, tfm::{sobel::Sobel, SobelPreBlur}};
 use render_graph::RenderGraph;
 
 mod pass;
@@ -12,10 +12,9 @@ fn main() {
 
     let mut render_graph = RenderGraph::new(input);
 
-    render_graph.add_node(Luminance::<LuminanceFastPerceivedMethod>::new());
     render_graph.add_node(SobelPreBlur::<3>::new());
     render_graph.add_node(Sobel {});
-    render_graph.add_node(Merge::new(&["tangent_flow_map"], &["sobel"]).ensure_opaque());
+    render_graph.add_node(Merge::new("tangent_flow_map", vec!["sobel"]).ensure_opaque());
 
     render_graph.verify();
     render_graph.render();

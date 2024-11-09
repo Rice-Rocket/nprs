@@ -5,16 +5,12 @@ use glam::UVec2;
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, Image}, pass::Pass};
 
 pub struct RenderGraph<'a> {
-    // TODO: don't require static lifetime for name of image names
     pub images: HashMap<&'a str, Image<4, f32, Rgba<f32>>>,
-    // pub main_image: &'a mut Image<4, f32, Rgba<f32>>,
-    // pub aux_images: HashMap<u32, Image<4, f32, Rgba<f32>>>,
 
     /// The edges of the graph, where a node is directed towards its dependencies.
     pub edges: HashMap<u32, Vec<u32>>,
 
     pub passes: HashMap<u32, Box<dyn Pass<'a>>>,
-    // TODO: don't require static lifetime for name of pass names
     pub names: HashMap<&'a str, u32>,
     
     root: u32,
