@@ -32,20 +32,20 @@ impl Merge {
     }
 }
 
-impl Pass for Merge {
-    fn name() -> &'static str {
+impl<'a> Pass<'a> for Merge {
+    fn name(&self) -> &'a str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> &[&'static str] {
+    fn dependencies(&self) -> &[&'a str] {
         self.dependencies
     }
 
-    fn target(&self) -> &'static str {
+    fn target(&self) -> &'a str {
         "main"
     }
 
-    fn auxiliary_images(&self) -> &[&'static str] {
+    fn auxiliary_images(&self) -> &[&'a str] {
         self.target
     }
 

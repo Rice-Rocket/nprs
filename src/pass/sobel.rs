@@ -10,20 +10,20 @@ impl Sobel {
     const NAME: &'static str = "sobel";
 }
 
-impl Pass for Sobel {
-    fn name() -> &'static str {
+impl<'a> Pass<'a> for Sobel {
+    fn name(&self) -> &'a str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> &[&'static str] {
+    fn dependencies(&self) -> &[&'a str] {
         &["luminance"]
     }
     
-    fn target(&self) -> &'static str {
+    fn target(&self) -> &'a str {
         "tangent_flow_map"
     }
 
-    fn auxiliary_images(&self) -> &[&'static str] {
+    fn auxiliary_images(&self) -> &[&'a str] {
         &[]
     }
 

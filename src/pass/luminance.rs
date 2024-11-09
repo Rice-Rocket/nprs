@@ -16,20 +16,20 @@ impl<M: LuminanceMethod> Luminance<M> {
     }
 }
 
-impl<M: LuminanceMethod> Pass for Luminance<M> {
-    fn name() -> &'static str {
+impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<M> {
+    fn name(&self) -> &'a str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> &[&'static str] {
+    fn dependencies(&self) -> &[&'a str] {
         &[]
     }
 
-    fn target(&self) -> &'static str {
+    fn target(&self) -> &'a str {
         "tangent_flow_map"
     }
 
-    fn auxiliary_images(&self) -> &[&'static str] {
+    fn auxiliary_images(&self) -> &[&'a str] {
         &["main"]
     }
 

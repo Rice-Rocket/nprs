@@ -4,25 +4,25 @@ use glam::UVec2;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, Image}, pass::Pass};
 
-pub struct RenderGraph {
+pub struct RenderGraph<'a> {
     // TODO: don't require static lifetime for name of image names
-    pub images: HashMap<&'static str, Image<4, f32, Rgba<f32>>>,
+    pub images: HashMap<&'a str, Image<4, f32, Rgba<f32>>>,
     // pub main_image: &'a mut Image<4, f32, Rgba<f32>>,
     // pub aux_images: HashMap<u32, Image<4, f32, Rgba<f32>>>,
 
     /// The edges of the graph, where a node is directed towards its dependencies.
     pub edges: HashMap<u32, Vec<u32>>,
 
-    pub passes: HashMap<u32, Box<dyn Pass>>,
+    pub passes: HashMap<u32, Box<dyn Pass<'a>>>,
     // TODO: don't require static lifetime for name of pass names
-    pub names: HashMap<&'static str, u32>,
+    pub names: HashMap<&'a str, u32>,
     
     root: u32,
     node_count: u32,
     resolution: UVec2,
 }
 
-impl RenderGraph {
+impl<'a> RenderGraph<'a> {
     pub fn new(image: Image<4, f32, Rgba<f32>>) -> Self {
         let resolution = image.resolution();
 
@@ -53,11 +53,9 @@ impl RenderGraph {
         self.edges.entry(from).and_modify(|edges| edges.push(to)).or_insert_with(|| vec![to]);
     }
 
-    pub fn add_node<P: Pass + 'static>(&mut self, node: P) {
-        if self.names.contains_key(P::name()) {
-            // TODO: somehow allow multiple of the same node type, but add new `target` so that
-            // each node has a specific image that it writes to
-            panic!("graph already contains node {}", P::name());
+    pub fn add_node<P: Pass<'a> + 'static>(&mut self, node: P) {
+        if self.names.contains_key(node.name()) {
+            panic!("graph already contains node {}", node.name());
         }
 
         let dependencies = node.dependencies();
@@ -72,7 +70,7 @@ impl RenderGraph {
             self.add_edge(self.node_count, id);
         }
 
-        self.names.insert(P::name(), self.node_count);
+        self.names.insert(node.name(), self.node_count);
         self.passes.insert(self.node_count, Box::new(node));
         self.node_count += 1;
     }
