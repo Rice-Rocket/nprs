@@ -6,9 +6,7 @@ pub mod merge;
 pub mod box_blur;
 
 pub trait Pass<'a> {
-    fn name(&self) -> &'a str
-    where
-        Self: Sized;
+    fn name(&self) -> &'a str;
 
     /// The passes this pass will be guaranteed to run after.
     fn dependencies(&self) -> &[&'a str];
@@ -20,4 +18,35 @@ pub trait Pass<'a> {
     fn auxiliary_images(&self) -> &[&'a str];
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]);
+}
+
+pub trait SpecializedPass<'a> {
+    type Parent: Pass<'a>;
+
+    fn parent(&self) -> &Self::Parent;
+}
+
+impl<'a, T> Pass<'a> for T
+where
+    T: SpecializedPass<'a>
+{
+    fn name(&self) -> &'a str {
+        self.parent().name()
+    }
+
+    fn dependencies(&self) -> &[&'a str] {
+        self.parent().dependencies()
+    }
+
+    fn target(&self) -> &'a str {
+        self.parent().target()
+    }
+
+    fn auxiliary_images(&self) -> &[&'a str] {
+        self.parent().auxiliary_images()
+    }
+
+    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+        self.parent().apply(target, aux_images)
+    }
 }

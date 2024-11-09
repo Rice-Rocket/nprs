@@ -16,7 +16,7 @@ impl<'a> Pass<'a> for Sobel {
     }
 
     fn dependencies(&self) -> &[&'a str] {
-        &["luminance"]
+        &["sobel_pre_blur"]
     }
     
     fn target(&self) -> &'a str {
