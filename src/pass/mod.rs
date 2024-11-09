@@ -3,6 +3,7 @@ use crate::image::{pixel::rgba::Rgba, Image};
 pub mod luminance;
 pub mod sobel;
 pub mod merge;
+pub mod box_blur;
 
 pub trait Pass<'a> {
     fn name(&self) -> &'a str
