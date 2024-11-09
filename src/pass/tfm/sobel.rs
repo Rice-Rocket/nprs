@@ -41,12 +41,12 @@ impl<'a> Pass<'a> for Sobel {
         ], UVec2::splat(3));
 
         target.map_in_place_with_positions(|pixel, pos| {
-            let gx = gx_image.load(pos);
-            let gy = gy_image.load(pos);
+            let gx = gx_image.load(pos).rgb();
+            let gy = gy_image.load(pos).rgb();
 
-            let r = gx.r * gx.r + gx.g * gx.g + gx.b * gx.b;
-            let g = gy.r * gy.r + gy.g * gy.g + gy.b * gy.b;
-            let b = gx.r * gy.r + gx.g * gy.g + gx.b * gy.b;
+            let r = gx.dot(gx);
+            let g = gy.dot(gy);
+            let b = gx.dot(gy);
 
             pixel.r = r;
             pixel.g = g;

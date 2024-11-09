@@ -12,7 +12,7 @@ fn main() {
 
     let mut render_graph = RenderGraph::new(input);
 
-    render_graph.add_node(SobelPreBlur::new(3));
+    render_graph.add_node(SobelPreBlur::new(1));
     render_graph.add_node(Sobel {});
     render_graph.add_node(Merge::new("tangent_flow_map", vec!["sobel"]).ensure_opaque());
 

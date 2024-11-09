@@ -65,13 +65,14 @@ impl<'a> Pass<'a> for BoxBlur<'a> {
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        let w = 1.0 / (self.kernel_size * self.kernel_size) as f32;
+        let kernel_area = self.kernel_size * self.kernel_size;
+        let w = 1.0 / kernel_area as f32;
 
         if self.source.is_some() {
             let source = aux_images[0];
-            *target = source.convolve(&vec![w; self.kernel_size], UVec2::splat(self.kernel_size as u32));
+            *target = source.convolve(&vec![w; kernel_area], UVec2::splat(self.kernel_size as u32));
         } else {
-            *target = target.convolve(&vec![w; self.kernel_size], UVec2::splat(self.kernel_size as u32));
+            *target = target.convolve(&vec![w; kernel_area], UVec2::splat(self.kernel_size as u32));
         }
     }
 }
