@@ -58,7 +58,7 @@ impl<'a> Pass<'a> for Merge<'a> {
         *target = aux.clone();
 
         if self.ensure_opaque {
-            target.map_in_place(|pixel| {
+            target.for_each(|pixel| {
                 pixel.a = 1.0;
             });
         }

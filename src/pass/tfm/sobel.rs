@@ -40,7 +40,7 @@ impl<'a> Pass<'a> for Sobel {
             0.125, 0.25, 0.125,
         ], UVec2::splat(3));
 
-        target.map_in_place_with_positions(|pixel, pos| {
+        target.for_each_with_positions(|pixel, pos| {
             let gx = gx_image.load(pos).rgb();
             let gy = gy_image.load(pos).rgb();
 

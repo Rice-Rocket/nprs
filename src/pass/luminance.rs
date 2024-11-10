@@ -64,13 +64,13 @@ impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<'a, M> {
         if self.source.is_some() {
             let source = aux_images[0];
 
-            target.map_in_place_with_positions(|pixel, pos| {
+            target.for_each_with_positions(|pixel, pos| {
                 let main_pixel = source.load(pos);
                 let l = M::luminance(main_pixel.r, main_pixel.g, main_pixel.b);
                 pixel.r = l;
             });
         } else {
-            target.map_in_place(|pixel| {
+            target.for_each(|pixel| {
                 let l = M::luminance(pixel.r, pixel.g, pixel.b);
                 pixel.r = l;
             })

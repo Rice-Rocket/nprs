@@ -58,9 +58,9 @@ impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     }
 }
 
-impl Into<Vec3> for Rgb<f32> {
-    fn into(self) -> Vec3 {
-        Vec3::new(self.r, self.g, self.b)
+impl From<Rgb<f32>> for Vec3 {
+    fn from(val: Rgb<f32>) -> Self {
+        Vec3::new(val.r, val.g, val.b)
     }
 }
 

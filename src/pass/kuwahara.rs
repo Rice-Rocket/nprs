@@ -49,7 +49,7 @@ impl<'a> Pass<'a> for Kuwahara {
 
         let source = target.clone();
 
-        target.map_in_place_with_positions(|pixel, pos| {
+        target.for_each_with_positions(|pixel, pos| {
             let t = tfm.load(pos);
 
             let a = kernel_radius as f32 * f32::clamp((self.alpha + t.a) / self.alpha, 0.1, 2.0);

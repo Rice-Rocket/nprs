@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
 use pass::{kuwahara::Kuwahara, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};

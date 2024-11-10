@@ -81,6 +81,7 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.pixels[(p.y * self.resolution.x + p.x) as usize] = c;
     }
 
+    /// Map a function over every pixel in the image, returning a new image.
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
@@ -90,14 +91,33 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.iter().map(f).collect())
     }
 
-    pub fn map_in_place<Convert>(&mut self, f: Convert)
+    /// Map a function over every pixel in the image, given its position.
+    pub fn map_with_positions<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
+    where
+        ToPixel: Pixel<CHANNELS, Format = ToFormat>,
+        Convert: Fn(&P, UVec2) -> ToPixel,
+        ToFormat: PixelFormat,
+    {
+        Image::<CHANNELS, ToFormat, ToPixel>::new(
+            self.resolution,
+            self.pixels.iter()
+                .enumerate()
+                .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
+                .map(|(pixel, pos)| f(pixel, pos))
+                .collect(),
+        )
+    }
+
+    /// Apply a function to each pixel in the image.
+    pub fn for_each<Convert>(&mut self, f: Convert)
     where
         Convert: Fn(&mut P)
     {
         self.pixels.iter_mut().for_each(f);
     }
 
-    pub fn map_in_place_with_positions<Convert>(&mut self, f: Convert)
+    /// Apply a function to each pixel in the image, given its position.
+    pub fn for_each_with_positions<Convert>(&mut self, f: Convert)
     where
         Convert: Fn(&mut P, UVec2)
     {

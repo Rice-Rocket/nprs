@@ -28,7 +28,7 @@ impl<'a> Pass<'a> for TangentFlowStructureTensor {
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        target.map_in_place(|pixel| {
+        target.for_each(|pixel| {
             let g: Vec3 = pixel.rgb().into();
 
             let lambda1 = 0.5 * (g.y + g.x + f32::sqrt(g.y * g.y - 2.0 * g.x * g.y + g.x * g.x + 4.0 * g.z * g.z));
