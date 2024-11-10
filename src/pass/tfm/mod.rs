@@ -1,4 +1,4 @@
-use super::{box_blur::BoxBlur, gaussian_blur::GaussianBlur, SpecializedPass};
+use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, SpecializedPass};
 
 pub mod sobel;
 pub mod structure_tensor;

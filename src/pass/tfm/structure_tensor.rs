@@ -7,7 +7,7 @@ pub struct TangentFlowStructureTensor {
 }
 
 impl TangentFlowStructureTensor {
-    const NAME: &'static str = "tfm_structure_tensor";
+    const NAME: &'static str = "tfm";
 }
 
 impl<'a> Pass<'a> for TangentFlowStructureTensor {
@@ -48,7 +48,7 @@ impl<'a> Pass<'a> for TangentFlowStructureTensor {
             pixel.r = t.x;
             pixel.g = t.y;
             pixel.b = phi;
-            pixel.a = len_d;
+            pixel.a = a;
         })
     }
 }

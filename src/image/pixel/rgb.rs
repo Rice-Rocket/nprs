@@ -28,6 +28,18 @@ impl<F: PixelFormat> Rgb<F> {
     }
 }
 
+impl Rgb<f32> {
+    #[inline]
+    pub fn saturate(self) -> Self {
+        Self::new(self.r.clamp(0.0, 1.0), self.g.clamp(0.0, 1.0), self.b.clamp(0.0, 1.0))
+    }
+
+    #[inline]
+    pub fn is_finite(self) -> bool {
+        self.r.is_finite() && self.g.is_finite() && self.b.is_finite()
+    }
+}
+
 impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     type Format = F;
 

@@ -30,6 +30,23 @@ impl<F: PixelFormat> Rgba<F> {
     pub fn rgb(self) -> Rgb<F> {
         Rgb::new(self.r, self.g, self.b)
     }
+
+    #[inline]
+    pub fn dot(self, other: Self) -> F {
+        self.r * other.r + self.g * other.g + self.b * other.b + self.a * other.a
+    }
+}
+
+impl Rgba<f32> {
+    #[inline]
+    pub fn saturate(self) -> Self {
+        Self::new(self.r.clamp(0.0, 1.0), self.g.clamp(0.0, 1.0), self.b.clamp(0.0, 1.0), self.a.clamp(0.0, 1.0))
+    }
+
+    #[inline]
+    pub fn is_finite(self) -> bool {
+        self.r.is_finite() && self.g.is_finite() && self.b.is_finite() && self.a.is_finite()
+    }
 }
 
 impl<F: PixelFormat> Pixel<4> for Rgba<F> {

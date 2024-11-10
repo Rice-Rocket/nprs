@@ -39,6 +39,7 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.resolution
     }
 
+    // TODO: bilinear and nearest neighbor sampling for inputing UV coordinates
     pub fn sample(&self, p: IVec2, wrap_mode: WrapMode2D) -> P {
         if let Some(p) = wrap_mode.remap(p, self.resolution.as_ivec2()) {
             self.pixels[(p.y * self.resolution.x + p.x) as usize]

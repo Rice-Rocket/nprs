@@ -2,9 +2,7 @@ use std::f32::consts::PI;
 
 use glam::UVec2;
 
-use crate::image::{pixel::rgba::Rgba, Image};
-
-use super::Pass;
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
 
 /// A pass that performs a gaussian blur on the `target` image.
 pub struct GaussianBlur<'a> {

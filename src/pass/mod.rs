@@ -1,9 +1,10 @@
 use crate::image::{pixel::rgba::Rgba, Image};
 
 pub mod tfm;
+pub mod blur;
 pub mod luminance;
 pub mod merge;
-pub mod blur;
+pub mod kuwahara;
 
 pub trait Pass<'a> {
     fn name(&self) -> &'a str;
