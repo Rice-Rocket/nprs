@@ -1,6 +1,6 @@
 use glam::{Mat2, Vec2, Vec3, Vec4, Vec4Swizzles as _};
 
-use crate::image::{pixel::{rgba::Rgba, Pixel}, wrap_mode::{WrapMode, WrapMode2D}, Image};
+use crate::image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image};
 
 use super::Pass;
 
@@ -76,7 +76,7 @@ impl<'a> Pass<'a> for Kuwahara {
                 for x in -max_x..=max_x {
                     let p = Vec2::new(x as f32, y as f32);
                     let mut v = sr * p;
-                    let mut c: Vec3 = source.sample(pos.as_ivec2() + p.as_ivec2(), WrapMode2D::CLAMP).rgb().into();
+                    let mut c: Vec3 = source.load_wrapped(pos.as_ivec2() + p.as_ivec2(), WrapMode2D::CLAMP).rgb().into();
                     
                     if v.dot(v) <= 0.25 {
                         c = c.clamp(Vec3::ZERO, Vec3::ONE);

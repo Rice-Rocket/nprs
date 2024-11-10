@@ -1,6 +1,6 @@
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{kuwahara::Kuwahara, merge::Merge, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};
+use pass::{kuwahara::Kuwahara, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};
 use render_graph::RenderGraph;
 
 mod pass;
@@ -8,7 +8,7 @@ mod image;
 mod render_graph;
 
 fn main() {
-    let input = Image::<4, f32, Rgba<f32>>::read("images/pagoda.png").unwrap();
+    let input = Image::<4, f32, Rgba<f32>>::read("images/tigers-nest.png").unwrap();
 
     let mut render_graph = RenderGraph::new(input);
 
@@ -33,5 +33,5 @@ fn main() {
     let image = render_graph.main_image();
 
     let image_u8 = image.to_format::<f16, Rgba<f16>>();
-    image_u8.write("output/pagoda.png").unwrap();
+    image_u8.write("output/tigers-nest.png").unwrap();
 }

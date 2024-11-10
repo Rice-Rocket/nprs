@@ -1,14 +1,14 @@
 use std::{fs::File, path::Path};
 
 use format::PixelFormat;
-use glam::{IVec2, UVec2};
+use glam::{IVec2, UVec2, Vec2};
 use pixel::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, rgba::Rgba, Pixel};
 use thiserror::Error;
-use wrap_mode::WrapMode2D;
+use sampler::{Filter, Sampler, WrapMode2D};
 
 pub mod pixel;
 pub mod format;
-pub mod wrap_mode;
+pub mod sampler;
 
 #[derive(Clone)]
 pub struct Image<const CHANNELS: usize, F, P>
@@ -39,8 +39,31 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.resolution
     }
 
-    // TODO: bilinear and nearest neighbor sampling for inputing UV coordinates
-    pub fn sample(&self, p: IVec2, wrap_mode: WrapMode2D) -> P {
+    pub fn sample(&self, uv: Vec2, sampler: Sampler) -> P {
+        match sampler.filter {
+            Filter::NearestNeighbor => {
+                let p = (uv * self.resolution.as_vec2()).round().as_ivec2();
+                self.load_wrapped(p, sampler.wrap_mode)
+            },
+            Filter::Linear => {
+                let p = uv * self.resolution.as_vec2() - 0.5;
+                let pi = p.floor().as_ivec2();
+                let d = p - p.floor();
+
+                let v00 = self.load_wrapped(pi, sampler.wrap_mode);
+                let v10 = self.load_wrapped(pi + IVec2::new(1, 0), sampler.wrap_mode);
+                let v01 = self.load_wrapped(pi + IVec2::new(0, 1), sampler.wrap_mode);
+                let v11 = self.load_wrapped(pi + IVec2::new(1, 1), sampler.wrap_mode);
+
+                v00 * F::from_scaled_float((1.0 - d.x) * (1.0 - d.y))
+                    + v10 * F::from_scaled_float(d.x * (1.0 - d.y))
+                    + v01 * F::from_scaled_float((1.0 - d.x) * d.y)
+                    + v11 * F::from_scaled_float(d.x * d.y)
+            },
+        }
+    }
+
+    pub fn load_wrapped(&self, p: IVec2, wrap_mode: WrapMode2D) -> P {
         if let Some(p) = wrap_mode.remap(p, self.resolution.as_ivec2()) {
             self.pixels[(p.y * self.resolution.x + p.x) as usize]
         } else {
@@ -229,7 +252,7 @@ impl<const CHANNELS: usize, P: Pixel<CHANNELS, Format = f32>> Image<CHANNELS, f3
                 for i in -(kernel_size.x / 2)..=(kernel_size.x / 2) {
                     for j in -(kernel_size.y / 2)..=(kernel_size.y / 2) {
                         let p = IVec2::new(x as i32 + i, y as i32 + j);
-                        let v = self.sample(p, WrapMode2D::CLAMP);
+                        let v = self.load_wrapped(p, WrapMode2D::CLAMP);
                         let w = kernel[((j + kernel_size.y / 2) * kernel_size.x + (i + kernel_size.x / 2)) as usize];
                         c = c + (v * w);
                     }

@@ -1,6 +1,12 @@
 use glam::{IVec2, UVec2};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct Sampler {
+    pub wrap_mode: WrapMode2D,
+    pub filter: Filter,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum WrapMode {
     Black,
     Clamp,
@@ -37,6 +43,12 @@ impl WrapMode2D {
 
         Some(p.as_uvec2())
     }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Filter {
+    NearestNeighbor,
+    Linear,
 }
 
 fn modulo(a: i32, b: i32) -> i32 {
