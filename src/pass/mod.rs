@@ -5,7 +5,7 @@ pub mod blur;
 pub mod luminance;
 pub mod merge;
 pub mod kuwahara;
-pub mod stipple;
+pub mod voronoi;
 
 pub trait Pass<'a> {
     fn name(&self) -> &'a str;

@@ -2,7 +2,7 @@
 
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{kuwahara::Kuwahara, luminance::{LuminanceFastPerceivedMethod, LuminanceStandardMethod, MainLuminance}, stipple::{RelaxedVoronoi, VoronoiMode, VoronoiRelaxWeightMode}, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};
+use pass::{kuwahara::Kuwahara, luminance::{LuminanceFastPerceivedMethod, LuminanceStandardMethod, MainLuminance}, voronoi::{RelaxedVoronoi, VoronoiMode, VoronoiRelaxWeightMode}, tfm::{sobel::Sobel, structure_tensor::TangentFlowStructureTensor, SobelPostBlur, SobelPreBlur}};
 use render_graph::RenderGraph;
 
 mod pass;
