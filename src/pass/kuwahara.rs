@@ -55,8 +55,9 @@ impl<'a> Pass<'a> for Kuwahara {
             let a = kernel_radius as f32 * f32::clamp((self.alpha + t.a) / self.alpha, 0.1, 2.0);
             let b = kernel_radius as f32 * f32::clamp(self.alpha / (self.alpha + t.a), 0.1, 2.0);
 
-            let cos_phi = t.b.cos();
-            let sin_phi = t.b.sin();
+            let phi = -f32::atan2(t.g, t.r);
+            let cos_phi = phi.cos();
+            let sin_phi = phi.sin();
 
             let r = Mat2::from_cols(Vec2::new(cos_phi, -sin_phi), Vec2::new(sin_phi, cos_phi));
             let s = Mat2::from_cols(Vec2::new(0.5 / a, 0.0), Vec2::new(0.0, 0.5 / b));

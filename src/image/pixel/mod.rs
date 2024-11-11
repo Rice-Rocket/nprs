@@ -29,6 +29,7 @@ pub trait Pixel<const CHANNELS: usize>:
     type Format: PixelFormat;
     
     const BLACK: Self;
+    const WHITE: Self;
 
     fn from_channels(channels: [Self::Format; CHANNELS]) -> Self;
 

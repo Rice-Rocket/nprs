@@ -81,6 +81,12 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.pixels[(p.y * self.resolution.x + p.x) as usize] = c;
     }
 
+    pub fn store_wrapped(&mut self, p: IVec2, c: P) {
+        if p.x < self.resolution.x as i32 && p.y < self.resolution.y as i32 && p.x >= 0 && p.y >= 0 {
+            self.pixels[(p.y as u32 * self.resolution.x + p.x as u32) as usize] = c;
+        }
+    }
+
     /// Map a function over every pixel in the image, returning a new image.
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
@@ -140,6 +146,23 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
                 Err(_) => ToPixel::from_channels([ToFormat::from_scaled_float(0.0); CHANNELS]),
             }
         })
+    }
+
+    // TODO: blend modes
+    pub fn blit(&mut self, im: Image<CHANNELS, F, P>, position: UVec2) {
+        for x in 0..im.resolution.x {
+            for y in 0..im.resolution.y {
+                let p = UVec2::new(x, y);
+                let pi = position.as_ivec2() + p.as_ivec2() - im.resolution.as_ivec2() / 2;
+
+                if pi.x < 0 || pi.x >= self.resolution.x as i32 || pi.y < 0 || pi.y >= self.resolution.y as i32 {
+                    continue;
+                }
+
+                let pixel = im.load(p);
+                self.store(pi.as_uvec2(), pixel);
+            }
+        }
     }
 
     pub fn read<S: AsRef<Path>>(path: S) -> Result<Image<CHANNELS, F, P>, ImageError> {

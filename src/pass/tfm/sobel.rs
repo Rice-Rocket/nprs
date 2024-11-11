@@ -29,15 +29,15 @@ impl<'a> Pass<'a> for Sobel {
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
         let gx_image = target.convolve(&[
-            -0.125, 0.0, 0.125,
             -0.25, 0.0, 0.25,
-            -0.125, 0.0, 0.125,
+            -0.5, 0.0, 0.5,
+            -0.25, 0.0, 0.25,
         ], UVec2::splat(3));
 
         let gy_image = target.convolve(&[
-            -0.125, -0.25, -0.125,
+            -0.25, -0.5, -0.25,
             0.0, 0.0, 0.0,
-            0.125, 0.25, 0.125,
+            0.25, 0.5, 0.25,
         ], UVec2::splat(3));
 
         target.for_each_with_positions(|pixel, pos| {

@@ -12,6 +12,7 @@ impl<F: PixelFormat> Pixel<2> for LumaAlpha<F> {
     type Format = F;
 
     const BLACK: Self = Self { v: F::BLACK, a: F::BLACK };
+    const WHITE: Self = Self { v: F::WHITE, a: F::WHITE };
 
     fn from_channels(channels: [Self::Format; 2]) -> Self {
         LumaAlpha {

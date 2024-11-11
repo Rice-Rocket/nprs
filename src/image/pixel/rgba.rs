@@ -53,6 +53,7 @@ impl<F: PixelFormat> Pixel<4> for Rgba<F> {
     type Format = F;
 
     const BLACK: Self = Self { r: F::BLACK, g: F::BLACK, b: F::BLACK, a: F::BLACK };
+    const WHITE: Self = Self { r: F::WHITE, g: F::WHITE, b: F::WHITE, a: F::WHITE };
 
     fn from_channels(channels: [Self::Format; 4]) -> Self {
         Rgba {

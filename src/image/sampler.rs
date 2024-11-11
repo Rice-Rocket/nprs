@@ -6,6 +6,11 @@ pub struct Sampler {
     pub filter: Filter,
 }
 
+impl Sampler {
+    pub const LINEAR_CLAMP: Sampler = Sampler { wrap_mode: WrapMode2D::CLAMP, filter: Filter::Linear };
+    pub const NEAREST_CLAMP: Sampler = Sampler { wrap_mode: WrapMode2D::CLAMP, filter: Filter::NearestNeighbor };
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum WrapMode {
     Black,

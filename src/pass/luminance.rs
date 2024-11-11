@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::image::{pixel::rgba::Rgba, Image};
 
-use super::Pass;
+use super::{Pass, SpecializedPass};
 
 /// A pass that computes the luminance of each pixel on the `target` image.
 pub struct Luminance<'a, M: LuminanceMethod> {
@@ -103,5 +103,21 @@ pub struct LuminancePerceivedMethod;
 impl LuminanceMethod for LuminancePerceivedMethod {
     fn luminance(r: f32, g: f32, b: f32) -> f32 {
         f32::sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b)
+    }
+}
+
+pub struct MainLuminance<'a, M: LuminanceMethod>(Luminance<'a, M>);
+
+impl<M: LuminanceMethod> MainLuminance<'_, M> {
+    pub fn new() -> Self {
+        Self(Luminance::new("main_luminance", "main_luminance", vec![]).with_source("main"))
+    }
+}
+
+impl<'a, M: LuminanceMethod> SpecializedPass<'a> for MainLuminance<'a, M> {
+    type Parent = Luminance<'a, M>;
+
+    fn parent(&self) -> &Self::Parent {
+        &self.0
     }
 }

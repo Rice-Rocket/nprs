@@ -44,6 +44,7 @@ impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     type Format = F;
 
     const BLACK: Self = Self { r: F::BLACK, g: F::BLACK, b: F::BLACK };
+    const WHITE: Self = Self { r: F::WHITE, g: F::WHITE, b: F::WHITE };
 
     fn from_channels(channels: [Self::Format; 3]) -> Self {
         Rgb {
