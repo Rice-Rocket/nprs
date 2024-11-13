@@ -1,20 +1,20 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::{collections::{HashMap, HashSet, VecDeque}, ops::Deref};
 
 use glam::UVec2;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, Image}, pass::Pass};
 
 pub struct RenderGraph<'a> {
-    pub images: HashMap<&'a str, Image<4, f32, Rgba<f32>>>,
+    pub images: HashMap<NodeId, Image<4, f32, Rgba<f32>>>,
 
     /// The edges of the graph, where a node is directed towards its dependencies.
-    pub edges: HashMap<u32, Vec<u32>>,
+    pub edges: HashMap<NodeId, Vec<NodeId>>,
 
-    pub passes: HashMap<u32, Box<dyn Pass<'a>>>,
-    pub names: HashMap<&'a str, u32>,
+    pub passes: HashMap<NodeId, Box<dyn Pass<'a>>>,
+    pub names: HashSet<&'a str>,
     
-    root: u32,
-    node_count: u32,
+    root: NodeId,
+    node_count: NodeId,
     resolution: UVec2,
 }
 
@@ -23,7 +23,10 @@ impl<'a> RenderGraph<'a> {
         let resolution = image.resolution();
 
         let mut images = HashMap::new();
-        images.insert("main", image);
+        images.insert(NodeId::SOURCE, image);
+
+        let mut names = HashSet::new();
+        names.insert("main");
 
         RenderGraph {
             images,
@@ -31,51 +34,45 @@ impl<'a> RenderGraph<'a> {
             // aux_images: HashMap::new(),
             edges: HashMap::new(),
             passes: HashMap::new(),
-            names: HashMap::new(),
-            root: 0,
-            node_count: 1,
+            names,
+            root: NodeId(0),
+            node_count: NodeId(1),
             resolution,
         }
     }
 
-    pub fn connections(&self, node: u32) -> &[u32] {
+    pub fn connections(&self, node: NodeId) -> &[NodeId] {
         match self.edges.get(&node) {
             Some(e) => e,
             None => &[],
         }
     }
 
-    pub fn add_edge(&mut self, from: u32, to: u32) {
+    pub fn add_edge(&mut self, from: NodeId, to: NodeId) {
         self.edges.entry(from).and_modify(|edges| edges.push(to)).or_insert_with(|| vec![to]);
     }
 
-    pub fn add_node<P: Pass<'a> + 'static>(&mut self, node: P) {
-        if self.names.contains_key(node.name()) {
-            panic!("graph already contains node {}", node.name());
-        }
+    /// Adds a [`Pass`] to this [`RenderGraph`], returning its corresponding [`NodeId`].
+    pub fn add_node<P: Pass<'a> + 'static>(&mut self, node: P, dependencies: &[NodeId]) -> NodeId {
+        let id = self.node_count;
 
-        let dependencies = node.dependencies();
-        let n_dependencies = dependencies.len();
-
-        if n_dependencies == 0 {
-            self.add_edge(self.node_count, 0);
-        }
-
+        // TODO: make sure dependencies match what the pass requires.
         for dependency in dependencies {
-            let Some(&id) = self.names.get(dependency) else { continue };
-            self.add_edge(self.node_count, id);
+            self.add_edge(id, *dependency);
         }
 
-        self.names.insert(node.name(), self.node_count);
-        self.passes.insert(self.node_count, Box::new(node));
+        self.names.insert(node.name());
+        self.passes.insert(id, Box::new(node));
         self.node_count += 1;
+        
+        id
     }
 
     fn is_cyclic(
         &self,
-        node: u32,
-        visited: &mut HashSet<u32>,
-        visit_stack: &mut VecDeque<u32>,
+        node: NodeId,
+        visited: &mut HashSet<NodeId>,
+        visit_stack: &mut VecDeque<NodeId>,
     ) -> bool {
         if !visited.contains(&node) {
             visited.insert(node);
@@ -99,16 +96,16 @@ impl<'a> RenderGraph<'a> {
         let mut visit_stack = VecDeque::new();
 
         // Detect cyclic graph
-        for (_name, &node) in self.names.iter() {
+        for &node in self.passes.keys().chain([NodeId::SOURCE].iter()) {
             if self.is_cyclic(node, &mut visited, &mut visit_stack) {
                 panic!("graph is cyclic");
             }
         }
 
         // Out-degree != 0
-        let mut from_nodes: HashSet<u32> = HashSet::new();
+        let mut from_nodes: HashSet<NodeId> = HashSet::new();
         // In-degree != 0
-        let mut to_nodes: HashSet<u32> = HashSet::new();
+        let mut to_nodes: HashSet<NodeId> = HashSet::new();
 
         for &from_node in self.edges.keys() {
             from_nodes.insert(from_node);
@@ -121,7 +118,7 @@ impl<'a> RenderGraph<'a> {
         let mut found_root = false;
 
         // Find root and isolated nodes
-        for (name, &node) in self.names.iter() {
+        for &node in self.passes.keys().chain([NodeId::SOURCE].iter()) {
             // In-degree = 0
             if !to_nodes.contains(&node) {
                 if found_root {
@@ -134,42 +131,47 @@ impl<'a> RenderGraph<'a> {
 
             if !to_nodes.contains(&node) && !from_nodes.contains(&node) {
                 // TODO: just warn and remove
-                panic!("graph contains isolated node {}", name);
+                panic!("graph contains isolated node of id {}", node);
+            }
+        }
+
+        // Check for missing dependencies
+        for (node, pass) in self.passes.iter() {
+            for dependency in pass.dependencies() {
+                if !self.names.contains(dependency) {
+                    panic!("graph is missing dependency '{}' for pass '{}'", dependency, pass.name());
+                }
             }
         }
 
         // Prepare auxiliary images
-        for (_node, pass) in self.passes.iter() {
-            let target = pass.target();
-            if !self.images.contains_key(target) {
-                self.images.insert(target, Image::<4, f32, Rgba<f32>>::new_fill(self.resolution, Rgba::<f32>::BLACK));
+        for (node, pass) in self.passes.iter() {
+            if !self.images.contains_key(node) {
+                self.images.insert(*node, Image::<4, f32, Rgba<f32>>::new_fill(self.resolution, Rgba::<f32>::BLACK));
             }
         }
     }
 
-    fn render_node(&mut self, node: u32) {
+    fn render_node(&mut self, node: NodeId) {
         let mut aux_images = Vec::new();
 
         if let Some(connections) = self.edges.get(&node) {
             for dependency in connections.clone().into_iter() {
                 self.render_node(dependency);
+
+                unsafe {
+                    aux_images.push(&*(self.images.get(&dependency).unwrap() as *const _));
+                }
             }
         }
 
-        // If the node doesn't correspond to any pass, that means it is the 'main image' node and
+        // If the node doesn't correspond to any pass, that means it is the 'source' node and
         // we don't need to do anything.
         let Some(pass) = self.passes.get(&node) else {
             return;
         };
 
-        for name in pass.auxiliary_images() {
-            // SAFETY: a node will never have its target image also be an auxiliary image.
-            unsafe {
-                aux_images.push(&*(self.images.get(name).unwrap() as *const _));
-            }
-        }
-
-        let target = self.images.get_mut(pass.target()).unwrap();
+        let target = self.images.get_mut(&node).unwrap();
 
         pass.apply(target, &aux_images);
     }
@@ -179,6 +181,46 @@ impl<'a> RenderGraph<'a> {
     }
 
     pub fn main_image(mut self) -> Image<4, f32, Rgba<f32>> {
-        self.images.remove("main").unwrap()
+        self.images.remove(&NodeId::SOURCE).unwrap()
+    }
+
+    pub fn pop_image(&mut self, node: NodeId) -> Option<Image<4, f32, Rgba<f32>>> {
+        self.images.remove(&node)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug)]
+pub struct NodeId(u32);
+
+impl NodeId {
+    /// The [`NodeId`] corresponding to the original input image.
+    pub const SOURCE: NodeId = NodeId(0);
+}
+
+impl Deref for NodeId {
+    type Target = u32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::Add<u32> for NodeId {
+    type Output = NodeId;
+
+    fn add(self, rhs: u32) -> Self::Output {
+        NodeId(*self + rhs)
+    }
+}
+
+impl std::ops::AddAssign<u32> for NodeId {
+    fn add_assign(&mut self, rhs: u32) {
+        self.0 += rhs
+    }
+}
+
+impl std::fmt::Display for NodeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

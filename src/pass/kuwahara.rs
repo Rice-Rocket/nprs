@@ -1,6 +1,6 @@
 use glam::{Mat2, Vec2, Vec3, Vec4, Vec4Swizzles as _};
 
-use crate::image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image};
+use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image}, pass::tfm::TangentFlowMap};
 
 use super::Pass;
 
@@ -25,19 +25,12 @@ impl<'a> Pass<'a> for Kuwahara {
     }
 
     fn dependencies(&self) -> Vec<&'a str> {
-        vec!["tfm"]
-    }
-
-    fn target(&self) -> &'a str {
-        "main"
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
-        vec!["tangent_flow_map"]
+        vec!["main", TangentFlowMap::NAME]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        let tfm = aux_images[0];
+        let source = aux_images[0];
+        let tfm = aux_images[1];
 
         let zeta = if let Some(zeta) = self.zeta {
             zeta
@@ -46,8 +39,6 @@ impl<'a> Pass<'a> for Kuwahara {
         };
 
         let kernel_radius = self.kernel_size / 2;
-
-        let source = target.clone();
 
         target.for_each_with_positions(|pixel, pos| {
             let t = tfm.load(pos);

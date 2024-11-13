@@ -1,33 +1,11 @@
 use glam::{Vec2, Vec3};
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}};
 
-pub struct TangentFlowStructureTensor {
+pub struct TangentFlowStructureTensor;
 
-}
-
-impl TangentFlowStructureTensor {
-    const NAME: &'static str = "tfm";
-}
-
-impl<'a> Pass<'a> for TangentFlowStructureTensor {
-    fn name(&self) -> &'a str {
-        Self::NAME
-    }
-
-    fn dependencies(&self) -> Vec<&'a str> {
-        vec!["sobel_post_blur"]
-    }
-
-    fn target(&self) -> &'a str {
-        "tangent_flow_map"
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
-        vec![]
-    }
-
-    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+impl SubPass for TangentFlowStructureTensor {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, _aux_images: &[&Image<4, f32, Rgba<f32>>]) {
         target.for_each(|pixel| {
             let g: Vec3 = pixel.rgb().into();
 

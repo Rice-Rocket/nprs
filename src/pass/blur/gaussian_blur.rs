@@ -2,24 +2,16 @@ use std::f32::consts::PI;
 
 use glam::UVec2;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}};
 
 /// A pass that performs a gaussian blur on the `target` image.
 pub struct GaussianBlur<'a> {
     /// The name of this pass.
     name: &'a str,
 
-    /// The image to write the resulting blur to.
-    ///
-    /// If `source` is not specified, this is also the image used to compute the blur, resulting in
-    /// the operation being performed in-place.
-    target: &'a str,
-
-    /// The image to blur.
+    /// The image to blur. If [`None`], the blur will be applied in-place to the target image
+    /// supplied to this pass.
     source: Option<&'a str>,
-
-    /// The passes to run before this pass.
-    dependencies: Vec<&'a str>,
 
     /// The gaussian kernel.
     kernel: Vec<f32>,
@@ -29,12 +21,7 @@ pub struct GaussianBlur<'a> {
 }
 
 impl<'a> GaussianBlur<'a> {
-    pub fn new(
-        name: &'a str,
-        target: &'a str,
-        dependencies: Vec<&'a str>,
-        sigma: f32,
-    ) -> Self {
+    pub fn new(name: &'a str, sigma: f32) -> Self {
         let kernel_size = 2 * (sigma * 2.45).floor() as usize + 1;
 
         let mut kernel = Vec::new();
@@ -48,9 +35,7 @@ impl<'a> GaussianBlur<'a> {
         
         Self {
             name,
-            target,
             source: None,
-            dependencies,
             kernel,
             kernel_size,
         }
@@ -68,14 +53,6 @@ impl<'a> Pass<'a> for GaussianBlur<'a> {
     }
 
     fn dependencies(&self) -> Vec<&'a str> {
-        self.dependencies.clone()
-    }
-
-    fn target(&self) -> &'a str {
-        self.target
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
         if let Some(source) = self.source {
             vec![source]
         } else {
@@ -90,6 +67,12 @@ impl<'a> Pass<'a> for GaussianBlur<'a> {
         } else {
             *target = target.convolve(&self.kernel, UVec2::splat(self.kernel_size as u32));
         }
+    }
+}
+
+impl SubPass for GaussianBlur<'_> {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+        self.apply(target, aux_images)
     }
 }
 

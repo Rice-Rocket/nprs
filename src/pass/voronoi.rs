@@ -2,10 +2,11 @@ use glam::{IVec2, UVec2, Vec2, Vec3};
 use rand::Rng;
 use voronoi::Point;
 
-use crate::image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image};
+use crate::{image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image}, pass::tfm::TangentFlowMap};
 
 use super::Pass;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum VoronoiRelaxWeightMode {
     /// Weights the centroids of voronoi regions based on luminance of the image. 
     /// This is only really useful with stippling.
@@ -16,6 +17,7 @@ pub enum VoronoiRelaxWeightMode {
     Frequency,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum VoronoiMode {
     Stippling,
     /// Treat voronoi regions as tiles of a mosaic, coloring them based on the original image. 
@@ -59,39 +61,29 @@ impl<'a> Pass<'a> for RelaxedVoronoi {
 
     fn dependencies(&self) -> Vec<&'a str> {
         if let VoronoiRelaxWeightMode::Luminance = self.relax_mode {
-            vec!["main_luminance"]
+            vec!["main", "main_luminance"]
         } else {
-            vec!["tfm"]
-        }
-    }
-
-    fn target(&self) -> &'a str {
-        "main"
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
-        if let VoronoiRelaxWeightMode::Luminance = self.relax_mode {
-            vec!["main_luminance"]
-        } else {
-            vec!["tangent_flow_map"]
+            vec!["main", TangentFlowMap::NAME]
         }
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        let weights = aux_images[0];
+        let source = aux_images[0];
+        let weights = aux_images[1];
 
         let mut rng = rand::thread_rng();
         let res = target.resolution();
-        let source = target.clone();
-
-        *target = Image::<4, f32, Rgba<f32>>::new_fill(res, Rgba::<f32>::BLACK);
 
         // Initialize seed points
         let mut seeds = Vec::new();
         while seeds.len() < self.points {
             let u: f32 = rng.gen();
             let v: f32 = rng.gen();
-            let l = weights.sample(Vec2::new(u, v), Sampler::LINEAR_CLAMP).b;
+            let l = if let VoronoiRelaxWeightMode::Luminance = self.relax_mode {
+                weights.sample(Vec2::new(u, v), Sampler::LINEAR_CLAMP).r
+            } else {
+                weights.sample(Vec2::new(u, v), Sampler::LINEAR_CLAMP).b
+            };
 
             if l < rng.gen() {
                 seeds.push(voronoi::Point::new((u * res.x as f32) as f64, (v * res.y as f32) as f64));
@@ -107,7 +99,14 @@ impl<'a> Pass<'a> for RelaxedVoronoi {
             for face in faces {
                 let poly = UnsortedPolygon::from_face(face);
                 let sorted_poly = poly.sort();
-                let cr = weighted_centroid(&sorted_poly, res.x as f32, weights, self.invert, self.weight_scale);
+                let cr = weighted_centroid(
+                    &sorted_poly,
+                    res.x as f32,
+                    weights,
+                    self.invert,
+                    self.weight_scale,
+                    self.relax_mode == VoronoiRelaxWeightMode::Luminance,
+                );
 
                 new_points.push(cr);
             }
@@ -139,7 +138,14 @@ impl<'a> Pass<'a> for RelaxedVoronoi {
 
                 for face in cells {
                     let sorted = UnsortedPolygon::from_face(face).sort();
-                    let centroid = weighted_centroid(&sorted, res.x as f32, weights, self.invert, self.weight_scale);
+                    let centroid = weighted_centroid(
+                        &sorted,
+                        res.x as f32,
+                        weights,
+                        self.invert,
+                        self.weight_scale,
+                        self.relax_mode == VoronoiRelaxWeightMode::Luminance,
+                    );
 
                     let c = Vec2::new(f64::try_from(centroid.x).unwrap() as f32, f64::try_from(centroid.y).unwrap() as f32);
                     let color = source.load_wrapped(c.round().as_ivec2(), WrapMode2D::CLAMP);
@@ -336,7 +342,14 @@ fn scanline_nodes(poly: &SortedPolygon, scan_y: f32, width: f32) -> Vec<IVec2> {
     nodes
 }
 
-fn weighted_centroid(poly: &SortedPolygon, width: f32, weights: &Image<4, f32, Rgba<f32>>, invert: bool, scale: f32) -> Point {
+fn weighted_centroid(
+    poly: &SortedPolygon,
+    width: f32,
+    weights: &Image<4, f32, Rgba<f32>>,
+    invert: bool,
+    scale: f32,
+    luminance: bool,
+) -> Point {
     let bbox = polygon_raster_bbox(poly);
 
     let mut c = Vec2::ZERO;
@@ -352,7 +365,11 @@ fn weighted_centroid(poly: &SortedPolygon, width: f32, weights: &Image<4, f32, R
             let x2 = i32::max(n_a, n_b);
 
             for x in x1..x2 - 1 {
-                let mut weight = weights.load_wrapped(IVec2::new(x, y), WrapMode2D::CLAMP).b;
+                let mut weight = if luminance {
+                    weights.load_wrapped(IVec2::new(x, y), WrapMode2D::CLAMP).r
+                } else {
+                    weights.load_wrapped(IVec2::new(x, y), WrapMode2D::CLAMP).b
+                };
                 weight = weight.powf(scale);
 
                 if invert {

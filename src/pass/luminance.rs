@@ -2,35 +2,23 @@ use std::marker::PhantomData;
 
 use crate::image::{pixel::rgba::Rgba, Image};
 
-use super::{Pass, SpecializedPass};
+use super::{Pass, SpecializedPass, SpecializedSubPass, SubPass};
 
 /// A pass that computes the luminance of each pixel on the `target` image.
 pub struct Luminance<'a, M: LuminanceMethod> {
     /// The name of this pass.
     name: &'a str,
 
-    /// The image to write the resulting luminance to.
-    ///
-    /// If `source` is not specified, this is also the image used to compute the luminance,
-    /// resulting in the operation being performed in-place.
-    target: &'a str,
-
-    /// The image to compute the luminance of.
+    /// The image to compute the luminance of. If [`None`], the luminance computation will be applied in-place 
+    /// to the target image supplied to this pass.
     source: Option<&'a str>,
-
-    /// The passes to run before this pass.
-    dependencies: Vec<&'a str>,
 
     _phantom: PhantomData<M>,
 }
 
 impl<'a, M: LuminanceMethod> Luminance<'a, M> {
-    pub fn new(
-        name: &'a str,
-        target: &'a str,
-        dependencies: Vec<&'a str>,
-    ) ->Self {
-        Self { name, target, dependencies, source: None, _phantom: PhantomData }
+    pub fn new(name: &'a str) ->Self {
+        Self { name, source: None, _phantom: PhantomData }
     }
 
     pub fn with_source(mut self, source: &'a str) -> Self {
@@ -45,14 +33,6 @@ impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<'a, M> {
     }
 
     fn dependencies(&self) -> Vec<&'a str> {
-        self.dependencies.clone()
-    }
-
-    fn target(&self) -> &'a str {
-        self.target
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
         if let Some(source) = self.source {
             vec![source]
         } else {
@@ -75,6 +55,12 @@ impl<'a, M: LuminanceMethod> Pass<'a> for Luminance<'a, M> {
                 pixel.r = l;
             })
         }
+    }
+}
+
+impl<M: LuminanceMethod> SubPass for Luminance<'_, M> {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+        self.apply(target, aux_images)
     }
 }
 
@@ -110,11 +96,19 @@ pub struct MainLuminance<'a, M: LuminanceMethod>(Luminance<'a, M>);
 
 impl<M: LuminanceMethod> MainLuminance<'_, M> {
     pub fn new() -> Self {
-        Self(Luminance::new("main_luminance", "main_luminance", vec![]).with_source("main"))
+        Self(Luminance::new("main_luminance").with_source("main"))
     }
 }
 
 impl<'a, M: LuminanceMethod> SpecializedPass<'a> for MainLuminance<'a, M> {
+    type Parent = Luminance<'a, M>;
+
+    fn parent(&self) -> &Self::Parent {
+        &self.0
+    }
+}
+
+impl<'a, M: LuminanceMethod> SpecializedSubPass for MainLuminance<'a, M> {
     type Parent = Luminance<'a, M>;
 
     fn parent(&self) -> &Self::Parent {

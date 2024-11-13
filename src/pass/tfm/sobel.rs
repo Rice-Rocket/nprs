@@ -1,33 +1,11 @@
 use glam::UVec2;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}};
 
-pub struct Sobel {
-    
-}
+pub struct Sobel;
 
-impl Sobel {
-    const NAME: &'static str = "sobel";
-}
-
-impl<'a> Pass<'a> for Sobel {
-    fn name(&self) -> &'a str {
-        Self::NAME
-    }
-
-    fn dependencies(&self) -> Vec<&'a str> {
-        vec!["sobel_pre_blur"]
-    }
-    
-    fn target(&self) -> &'a str {
-        "tangent_flow_map"
-    }
-
-    fn auxiliary_images(&self) -> Vec<&'a str> {
-        vec![]
-    }
-
-    fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
+impl SubPass for Sobel {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, _dependencies: &[&Image<4, f32, Rgba<f32>>]) {
         let gx_image = target.convolve(&[
             -0.25, 0.0, 0.25,
             -0.5, 0.0, 0.5,
