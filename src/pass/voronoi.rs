@@ -17,9 +17,19 @@ pub enum VoronoiRelaxWeightMode {
     Frequency,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum VoronoiMode {
-    Stippling,
+    /// Treat the centroids of the voronoi regions as stippling points.
+    Stippling {
+        /// The background color of the stippled image.
+        background: Rgba<f32>,
+
+        /// The color of the stippling dots.
+        stipple: Rgba<f32>,
+
+        /// The radius of the stippled dots.
+        stipple_radius: f32,
+    },
     /// Treat voronoi regions as tiles of a mosaic, coloring them based on the original image. 
     /// The sharpness of edges can be controlled by changing the standard deviation of the
     /// `SobelPostBlur` gaussian blur pass. A higher standard deviation of this blur makes edges
@@ -31,18 +41,23 @@ pub struct RelaxedVoronoi {
     /// The number of points to distribute and relax.
     pub points: usize,
 
-    //// The number of iterations taken to relax the image. A value of 50 is usually more than enough, but
+    /// The number of iterations taken to relax the image. A value of 20 is usually more than enough, but
     /// for higher resolution images more may be required.
     pub relax_iterations: usize,
 
     /// The method with which to weight the centroids of voronoi regions during relaxation.
     pub relax_mode: VoronoiRelaxWeightMode,
+
+    /// The method with which to display the final image.
     pub mode: VoronoiMode,
 
     /// The amount by which the centroids of voronoi regions are weighted. 
+    ///
     /// A value of 0 uniformly distributes voronoi centroids and may be desirable to achieve
     /// certain mosaics. For nice, sharp edges on mosaics, a weight scale of 0.5 combined with a
     /// `SobelPostBlur` standard deviation of 5 creates clear and clean edges.
+    ///
+    /// For stippling, a value of 10 is recommended.
     pub weight_scale: f32,
 
     /// Whether or not to invert centroid weights. Recommended for stippling and not recommended
@@ -51,7 +66,7 @@ pub struct RelaxedVoronoi {
 }
 
 impl RelaxedVoronoi {
-    const NAME: &'static str = "voronoistippling";
+    pub const NAME: &'static str = "relaxedvoronoi";
 }
 
 impl<'a> Pass<'a> for RelaxedVoronoi {
@@ -115,17 +130,22 @@ impl<'a> Pass<'a> for RelaxedVoronoi {
         }
 
         match self.mode {
-            VoronoiMode::Stippling => {
+            VoronoiMode::Stippling {
+                background,
+                stipple,
+                stipple_radius,
+            } => {
+                *target = Image::new_fill(target.resolution(), background);
+
                 // Draw relaxed centroids
                 for p in seeds {
                     let p = Vec2::new(f64::try_from(p.x).unwrap() as f32, f64::try_from(p.y).unwrap() as f32);
-                    let radius = 1.0;
 
                     // TODO: Antialiased circle
-                    for x in (p.x - radius).floor() as i32..(p.x + radius).ceil() as i32 {
-                        for y in (p.y - radius).floor() as i32..(p.y + radius).ceil() as i32 {
-                            if p.distance_squared(Vec2::new(x as f32, y as f32)) < radius * radius {
-                                target.store_wrapped(IVec2::new(x, y), Rgba::<f32>::WHITE);
+                    for x in (p.x - stipple_radius).floor() as i32..(p.x + stipple_radius).ceil() as i32 {
+                        for y in (p.y - stipple_radius).floor() as i32..(p.y + stipple_radius).ceil() as i32 {
+                            if p.distance_squared(Vec2::new(x as f32, y as f32)) < stipple_radius * stipple_radius {
+                                target.store_wrapped(IVec2::new(x, y), stipple);
                             }
                         }
                     }
@@ -370,11 +390,12 @@ fn weighted_centroid(
                 } else {
                     weights.load_wrapped(IVec2::new(x, y), WrapMode2D::CLAMP).b
                 };
-                weight = weight.powf(scale);
 
                 if invert {
                     weight = 1.0 - weight;
                 }
+
+                weight = weight.powf(scale);
 
                 c += weight * Vec2::new(x as f32, y as f32);
 

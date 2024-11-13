@@ -16,7 +16,7 @@ pub struct Kuwahara {
 }
 
 impl Kuwahara {
-    const NAME: &'static str = "kuwahara";
+    pub const NAME: &'static str = "kuwahara";
 }
 
 impl<'a> Pass<'a> for Kuwahara {
