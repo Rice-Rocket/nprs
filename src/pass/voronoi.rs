@@ -412,14 +412,14 @@ impl UnsortedPolygon {
 }
 
 impl Line {
-    pub fn from_nodes(nodes: Vec<IVec2>) -> Self {
+    fn from_nodes(nodes: Vec<IVec2>) -> Self {
         Self {
             p1: nodes[0].as_vec2(),
             p2: nodes[1].as_vec2(),
         }
     }
 
-    pub fn intersect(self, other: Self) -> IVec2 {
+    fn intersect(self, other: Self) -> IVec2 {
         let x1 = self.p1.x;
         let y1 = self.p1.y;
         let x2 = self.p2.x;

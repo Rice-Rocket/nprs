@@ -5,8 +5,8 @@ use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::MAIN_IMAGE};
 
 use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SpecializedPass, SpecializedSubPass, SubPass};
 
-pub mod sobel;
-pub mod structure_tensor;
+mod sobel;
+mod structure_tensor;
 
 pub struct TangentFlowMap<'a> {
     sobel_pre_blur: SobelPreBlur<'a>,
@@ -48,10 +48,10 @@ impl<'a> Pass<'a> for TangentFlowMap<'a> {
     }
 }
 
-pub struct SobelPreBlur<'a>(BoxBlur<'a>);
+struct SobelPreBlur<'a>(BoxBlur<'a>);
 
 impl SobelPreBlur<'_> {
-    pub fn new(kernel_radius: usize) -> Self {
+    fn new(kernel_radius: usize) -> Self {
         Self(BoxBlur::new("", kernel_radius).with_source(MAIN_IMAGE))
     }
 }
@@ -64,10 +64,10 @@ impl<'a> SpecializedSubPass for SobelPreBlur<'a> {
     }
 }
 
-pub struct SobelPostBlur<'a>(GaussianBlur<'a>);
+struct SobelPostBlur<'a>(GaussianBlur<'a>);
 
 impl SobelPostBlur<'_> {
-    pub fn new(sigma: f32) -> Self {
+    fn new(sigma: f32) -> Self {
         Self(GaussianBlur::new("", sigma))
     }
 }

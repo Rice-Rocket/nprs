@@ -6,13 +6,13 @@ use super::Pass;
 
 /// A pass that applies the kuwahara filter.
 pub struct Kuwahara {
-    pub kernel_size: u32,
-    pub sharpness: f32,
-    pub hardness: f32,
-    pub alpha: f32,
-    pub zero_crossing: f32,
-    pub zeta: Option<f32>,
-    pub passes: u32,
+    kernel_size: u32,
+    sharpness: f32,
+    hardness: f32,
+    alpha: f32,
+    zero_crossing: f32,
+    zeta: Option<f32>,
+    passes: u32,
 }
 
 impl Kuwahara {
