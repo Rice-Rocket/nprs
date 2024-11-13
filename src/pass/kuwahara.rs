@@ -1,6 +1,6 @@
 use glam::{Mat2, Vec2, Vec3, Vec4, Vec4Swizzles as _};
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image}, pass::tfm::TangentFlowMap};
+use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image}, pass::tfm::TangentFlowMap, render_graph::ANY_IMAGE};
 
 use super::Pass;
 
@@ -25,7 +25,7 @@ impl<'a> Pass<'a> for Kuwahara {
     }
 
     fn dependencies(&self) -> Vec<&'a str> {
-        vec!["main", TangentFlowMap::NAME]
+        vec![ANY_IMAGE, TangentFlowMap::NAME]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {

@@ -4,6 +4,13 @@ use glam::UVec2;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, Image}, pass::Pass};
 
+/// The string representing the main image dependency.
+pub const MAIN_IMAGE: &str = "main";
+
+/// The string representing a wildcard dependency, meaning the pass can accept any image in that
+/// spot.
+pub const ANY_IMAGE: &str = "*";
+
 pub struct RenderGraph<'a> {
     pub images: HashMap<NodeId, Image<4, f32, Rgba<f32>>>,
 
@@ -26,12 +33,10 @@ impl<'a> RenderGraph<'a> {
         images.insert(NodeId::SOURCE, image);
 
         let mut names = HashSet::new();
-        names.insert("main");
+        names.insert(MAIN_IMAGE);
 
         RenderGraph {
             images,
-            // main_image: target,
-            // aux_images: HashMap::new(),
             edges: HashMap::new(),
             passes: HashMap::new(),
             names,
@@ -56,7 +61,6 @@ impl<'a> RenderGraph<'a> {
     pub fn add_node<P: Pass<'a> + 'static>(&mut self, node: P, dependencies: &[NodeId]) -> NodeId {
         let id = self.node_count;
 
-        // TODO: make sure dependencies match what the pass requires.
         for dependency in dependencies {
             self.add_edge(id, *dependency);
         }
@@ -137,9 +141,51 @@ impl<'a> RenderGraph<'a> {
 
         // Check for missing dependencies
         for (node, pass) in self.passes.iter() {
-            for dependency in pass.dependencies() {
+            for (i, dependency) in pass.dependencies().into_iter().enumerate() {
+                let Some(dependency_node) = self.connections(*node).get(i) else {
+                    if self.connections(*node).len() == pass.dependencies().len() {
+                        panic!("graph is missing connection between dependency '{}' and pass '{}'", dependency, pass.name());
+                    } else {
+                        panic!(
+                            "graph has different number of edges ({}) and dependencies ({}) associated with the same pass '{}'",
+                            self.connections(*node).len(),
+                            pass.dependencies().len(),
+                            pass.name()
+                        );
+                    }
+                };
+
+                if dependency == ANY_IMAGE {
+                    continue;
+                }
+
                 if !self.names.contains(dependency) {
                     panic!("graph is missing dependency '{}' for pass '{}'", dependency, pass.name());
+                }
+
+                match self.passes.get(dependency_node) {
+                    Some(edge_pass) => {
+                        if edge_pass.name() != dependency {
+                            panic!(
+                                "graph has mismatched edge and dependency (pass '{}' depends on '{}', was given '{}' at index {})",
+                                pass.name(),
+                                dependency,
+                                edge_pass.name(),
+                                i,
+                            );
+                        }
+                    },
+                    // Main image node
+                    None => {
+                        if dependency != MAIN_IMAGE {
+                            panic!(
+                                "graph has mismatched edge and dependency (pass '{}' depends on '{}', was given 'main' at index {})",
+                                pass.name(),
+                                dependency,
+                                i,
+                            );
+                        }
+                    }
                 }
             }
         }

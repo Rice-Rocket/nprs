@@ -1,7 +1,7 @@
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
-use crate::image::{pixel::rgba::Rgba, Image};
+use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::MAIN_IMAGE};
 
 use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SpecializedPass, SpecializedSubPass, SubPass};
 
@@ -37,7 +37,7 @@ impl<'a> Pass<'a> for TangentFlowMap<'a> {
     }
 
     fn dependencies(&self) -> Vec<&'a str> {
-        vec!["main"]
+        vec![MAIN_IMAGE]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
@@ -52,7 +52,7 @@ pub struct SobelPreBlur<'a>(BoxBlur<'a>);
 
 impl SobelPreBlur<'_> {
     pub fn new(kernel_radius: usize) -> Self {
-        Self(BoxBlur::new("", kernel_radius).with_source("main"))
+        Self(BoxBlur::new("", kernel_radius).with_source(MAIN_IMAGE))
     }
 }
 

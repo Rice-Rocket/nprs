@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::image::{pixel::rgba::Rgba, Image};
+use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::MAIN_IMAGE};
 
 use super::{Pass, SpecializedPass, SpecializedSubPass, SubPass};
 
@@ -96,7 +96,7 @@ pub struct MainLuminance<'a, M: LuminanceMethod>(Luminance<'a, M>);
 
 impl<M: LuminanceMethod> MainLuminance<'_, M> {
     pub fn new() -> Self {
-        Self(Luminance::new("main_luminance").with_source("main"))
+        Self(Luminance::new("main_luminance").with_source(MAIN_IMAGE))
     }
 }
 
