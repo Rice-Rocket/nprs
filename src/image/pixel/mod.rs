@@ -24,6 +24,7 @@ pub trait Pixel<const CHANNELS: usize>:
     + Div<Self, Output = Self>
     + Mul<Self::Format, Output = Self>
     + Div<Self::Format, Output = Self>
+    + Send + Sync
     + Clone + Copy
 {
     type Format: PixelFormat;

@@ -3,6 +3,7 @@ use std::{fs::File, path::Path};
 use format::PixelFormat;
 use glam::{IVec2, UVec2, Vec2};
 use pixel::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, rgba::Rgba, Pixel};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
 use thiserror::Error;
 use sampler::{Filter, Sampler, WrapMode2D};
 
@@ -91,22 +92,22 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
-        Convert: Fn(&P) -> ToPixel,
+        Convert: Fn(&P) -> ToPixel + Send + Sync,
         ToFormat: PixelFormat,
     {
-        Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.iter().map(f).collect())
+        Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.par_iter().map(f).collect())
     }
 
     /// Map a function over every pixel in the image, given its position.
     pub fn map_with_positions<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
     where
         ToPixel: Pixel<CHANNELS, Format = ToFormat>,
-        Convert: Fn(&P, UVec2) -> ToPixel,
+        Convert: Fn(&P, UVec2) -> ToPixel + Sync,
         ToFormat: PixelFormat,
     {
         Image::<CHANNELS, ToFormat, ToPixel>::new(
             self.resolution,
-            self.pixels.iter()
+            self.pixels.par_iter()
                 .enumerate()
                 .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
                 .map(|(pixel, pos)| f(pixel, pos))
@@ -117,18 +118,18 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     /// Apply a function to each pixel in the image.
     pub fn for_each<Convert>(&mut self, f: Convert)
     where
-        Convert: Fn(&mut P)
+        Convert: Fn(&mut P) + Send + Sync
     {
-        self.pixels.iter_mut().for_each(f);
+        self.pixels.par_iter_mut().for_each(f);
     }
 
     /// Apply a function to each pixel in the image, given its position.
     pub fn for_each_with_positions<Convert>(&mut self, f: Convert)
     where
-        Convert: Fn(&mut P, UVec2)
+        Convert: Fn(&mut P, UVec2) + Sync
     {
         self.pixels
-            .iter_mut()
+            .par_iter_mut()
             .enumerate()
             .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
             .for_each(|(pixel, pos)| f(pixel, pos));
@@ -288,24 +289,20 @@ impl<const CHANNELS: usize, P: Pixel<CHANNELS, Format = f32>> Image<CHANNELS, f3
         let kernel_size = kernel_size.as_ivec2();
         let mut image = Image::<CHANNELS, f32, P>::new_fill(self.resolution, P::BLACK);
 
-        for x in 0..self.resolution.x {
-            for y in 0..self.resolution.y {
-                let mut c = P::BLACK;
+        self.map_with_positions(|pixel, pos| {
+            let mut c = P::BLACK;
 
-                for i in -(kernel_size.x / 2)..=(kernel_size.x / 2) {
-                    for j in -(kernel_size.y / 2)..=(kernel_size.y / 2) {
-                        let p = IVec2::new(x as i32 + i, y as i32 + j);
-                        let v = self.load_wrapped(p, WrapMode2D::CLAMP);
-                        let w = kernel[((j + kernel_size.y / 2) * kernel_size.x + (i + kernel_size.x / 2)) as usize];
-                        c = c + (v * w);
-                    }
+            for i in -(kernel_size.x / 2)..=(kernel_size.x / 2) {
+                for j in -(kernel_size.y / 2)..=(kernel_size.y / 2) {
+                    let p = IVec2::new(pos.x as i32 + i, pos.y as i32 + j);
+                    let v = self.load_wrapped(p, WrapMode2D::CLAMP);
+                    let w = kernel[((j + kernel_size.y / 2) * kernel_size.x + (i + kernel_size.x / 2)) as usize];
+                    c = c + (v * w);
                 }
-
-                image.store(UVec2::new(x, y), c);
             }
-        }
 
-        image
+            c
+        })
     }
 }
 

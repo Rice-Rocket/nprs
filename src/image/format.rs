@@ -7,6 +7,7 @@ pub trait PixelFormat:
     + Sub<Self, Output = Self>
     + Mul<Self, Output = Self>
     + Div<Self, Output = Self>
+    + Send + Sync
     + Sized + Clone + Copy
 {
     const BLACK: Self;
