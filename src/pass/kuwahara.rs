@@ -17,6 +17,63 @@ pub struct Kuwahara {
 
 impl Kuwahara {
     pub const NAME: &'static str = "kuwahara";
+
+    /// Creates a new [`Kuwahara`] pass with default options.
+    pub fn new() -> Kuwahara {
+        Kuwahara {
+            kernel_size: 20,
+            sharpness: 8.0,
+            hardness: 8.0,
+            alpha: 1.0,
+            zero_crossing: 0.58,
+            zeta: None,
+            passes: 1,
+        }
+    }
+
+    /// The size of the kuwahara kernel. Larger kernel sizes create larger so-called "brush strokes".
+    ///
+    /// Defaults to `20`
+    pub fn kernel_size(mut self, kernel_size: u32) -> Self {
+        self.kernel_size = kernel_size;
+        self
+    }
+
+    /// Defaults to `8.0`
+    pub fn sharpness(mut self, sharpness: f32) -> Self {
+        self.sharpness = sharpness;
+        self
+    }
+
+    /// Defaults to `8.0`
+    pub fn hardness(mut self, hardness: f32) -> Self {
+        self.hardness = hardness;
+        self
+    }
+
+    /// Defaults to `1.0`
+    pub fn alpha(mut self, alpha: f32) -> Self {
+        self.alpha = alpha;
+        self
+    }
+
+    /// Defaults to `0.58`
+    pub fn zero_crossing(mut self, zero_crossing: f32) -> Self {
+        self.zero_crossing = zero_crossing;
+        self
+    }
+
+    /// Defaults to [`None`]
+    pub fn zeta(mut self, zeta: Option<f32>) -> Self {
+        self.zeta = zeta;
+        self
+    }
+
+    /// Defaults to `1`
+    pub fn passes(mut self, passes: u32) -> Self {
+        self.passes = passes;
+        self
+    }
 }
 
 impl<'a> Pass<'a> for Kuwahara {

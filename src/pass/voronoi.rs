@@ -39,17 +39,17 @@ pub enum VoronoiMode {
 
 pub struct RelaxedVoronoi {
     /// The number of points to distribute and relax.
-    pub points: usize,
+    points: usize,
 
     /// The number of iterations taken to relax the image. A value of 20 is usually more than enough, but
     /// for higher resolution images more may be required.
-    pub relax_iterations: usize,
+    relax_iterations: usize,
 
     /// The method with which to weight the centroids of voronoi regions during relaxation.
-    pub relax_mode: VoronoiRelaxWeightMode,
+    relax_mode: VoronoiRelaxWeightMode,
 
     /// The method with which to display the final image.
-    pub mode: VoronoiMode,
+    mode: VoronoiMode,
 
     /// The amount by which the centroids of voronoi regions are weighted. 
     ///
@@ -58,15 +58,150 @@ pub struct RelaxedVoronoi {
     /// `SobelPostBlur` standard deviation of 5 creates clear and clean edges.
     ///
     /// For stippling, a value of 10 is recommended.
-    pub weight_scale: f32,
+    weight_scale: f32,
 
     /// Whether or not to invert centroid weights. Recommended for stippling and not recommended
     /// for mosaics.
-    pub invert: bool,
+    invert: bool,
 }
 
 impl RelaxedVoronoi {
     pub const NAME: &'static str = "relaxedvoronoi";
+
+    /// Create a new [`RelaxedVoronoi`] pass that performs stippling-like effect on the given number of
+    /// `points`.
+    pub fn stipple(points: usize) -> RelaxedVoronoi {
+        RelaxedVoronoi {
+            points,
+            relax_iterations: 20,
+            relax_mode: VoronoiRelaxWeightMode::Luminance,
+            mode: VoronoiMode::Stippling {
+                background: Rgba::new(1.0, 1.0, 1.0, 1.0),
+                stipple: Rgba::new(0.0, 0.0, 0.0, 1.0),
+                stipple_radius: 1.0,
+            },
+            weight_scale: 10.0,
+            invert: true,
+        }
+    }
+
+    /// Create a new [`RelaxedVoronoi`] pass that performs mosaic-like effect on the given number of
+    /// `points`.
+    pub fn mosaic(points: usize) -> RelaxedVoronoi {
+        RelaxedVoronoi {
+            points,
+            relax_iterations: 20,
+            relax_mode: VoronoiRelaxWeightMode::Frequency,
+            mode: VoronoiMode::Mosaic,
+            weight_scale: 0.5,
+            invert: false,
+        }
+    }
+
+    /// The background color of the stippled image.
+    ///
+    /// Defaults to `Rgba(1.0, 1.0, 1.0, 1.0)`
+    pub fn background_color(mut self, color: Rgba<f32>) -> Self {
+        if let VoronoiMode::Stippling {
+            background,
+            stipple,
+            stipple_radius,
+        } = &mut self.mode {
+            *background = color;
+        }
+
+        self
+    }
+
+    /// The color of the stippling dots.
+    ///
+    /// Defaults to `Rgba(0.0, 0.0, 0.0, 1.0)`
+    pub fn stipple_color(mut self, color: Rgba<f32>) -> Self {
+        if let VoronoiMode::Stippling {
+            background,
+            stipple,
+            stipple_radius,
+        } = &mut self.mode {
+            *stipple = color;
+        }
+
+        self
+    }
+
+    /// The radius of the stippled dots.
+    ///
+    /// Defaults to `1.0`
+    pub fn stipple_radius(mut self, radius: f32) -> Self {
+        if let VoronoiMode::Stippling {
+            background,
+            stipple,
+            stipple_radius,
+        } = &mut self.mode {
+            *stipple_radius = radius;
+        }
+
+        self
+    }
+
+    /// The number of iterations taken to relax the image. A value of 20 is usually more than enough, but
+    /// for higher resolution images more may be required.
+    ///
+    /// Defaults to `20`
+    pub fn relax_iterations(mut self, iterations: usize) -> Self {
+        self.relax_iterations = iterations;
+        self
+    }
+
+    /// Invert centroid weights. Recommended for stippling and not recommended
+    /// for mosaics.
+    ///
+    /// Default for stipple.
+    pub fn invert(mut self) -> Self {
+        self.invert = true;
+        self
+    }
+
+    /// Does not invert centroid weights. Recommended for mosaics and not recommended
+    /// for stippling.
+    ///
+    /// Default for mosaic.
+    pub fn no_invert(mut self) -> Self {
+        self.invert = false;
+        self
+    }
+
+    /// The amount by which the centroids of voronoi regions are weighted. 
+    ///
+    /// A value of 0 uniformly distributes voronoi centroids and may be desirable to achieve
+    /// certain mosaics. For nice, sharp edges on mosaics, a weight scale of 0.5 combined with a
+    /// `SobelPostBlur` standard deviation of 5 creates clear and clean edges.
+    ///
+    /// For stippling, a value of 10 is recommended.
+    ///
+    /// Defaults to `10` for stipple and `0.5` for mosaic.
+    pub fn weight_scale(mut self, weight_scale: f32) -> Self {
+        self.weight_scale = weight_scale;
+        self
+    }
+
+    /// Weights the centroids of voronoi regions based on frequency of the image.
+    /// For stippling, this accentuates edge lines.
+    /// For the mosaic, this creates smaller tiles near edges, leading to clearer edge lines.
+    ///
+    /// Default for mosaic.
+    pub fn relax_with_frequency(mut self) -> Self {
+        self.relax_mode = VoronoiRelaxWeightMode::Frequency;
+        self
+    }
+
+    /// Weights the centroids of voronoi regions based on luminance of the image. 
+    /// This is only really useful with stippling.
+    ///
+    /// Default for stipple.
+    pub fn relax_with_luminance(mut self) -> Self {
+        self.relax_mode = VoronoiRelaxWeightMode::Luminance;
+        self
+    }
 }
 
 impl<'a> Pass<'a> for RelaxedVoronoi {
