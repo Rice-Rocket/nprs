@@ -2,7 +2,7 @@
 
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{kuwahara::Kuwahara, luminance::{Luminance, LuminanceStandardMethod}, tfm::TangentFlowMap};
+use pass::{kuwahara::Kuwahara, luminance::{Luminance, LuminanceStandardMethod}, tfm::TangentFlowMap, voronoi::RelaxedVoronoi};
 use render_graph::{NodeId, RenderGraph};
 
 mod pass;
@@ -10,7 +10,7 @@ mod image;
 mod render_graph;
 
 fn main() {
-    let input = Image::<4, f32, Rgba<f32>>::read("images/lalaland.png").unwrap();
+    let input = Image::<4, f32, Rgba<f32>>::read("images/lalaland-full.png").unwrap();
 
     let mut render_graph = RenderGraph::new(input);
 
@@ -33,5 +33,5 @@ fn main() {
     let image = render_graph.pop_image(kuwahara).unwrap();
 
     let image_u8 = image.to_format::<f16, Rgba<f16>>();
-    image_u8.write("output/lalaland-kuwahara.png").unwrap();
+    image_u8.write("output/lalaland-full-kuwahara.png").unwrap();
 }

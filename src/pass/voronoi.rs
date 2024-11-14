@@ -2,7 +2,7 @@ use glam::{IVec2, UVec2, Vec2, Vec3};
 use rand::Rng;
 use voronoi::Point;
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image}, pass::tfm::TangentFlowMap, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image}, pass::{luminance::{Luminance, LuminanceStandardMethod}, tfm::TangentFlowMap}, render_graph::ANY_IMAGE};
 
 use super::Pass;
 
@@ -211,7 +211,7 @@ impl<'a> Pass<'a> for RelaxedVoronoi {
 
     fn dependencies(&self) -> Vec<&'a str> {
         if let VoronoiRelaxWeightMode::Luminance = self.relax_mode {
-            vec![ANY_IMAGE, "main_luminance"]
+            vec![ANY_IMAGE, Luminance::<LuminanceStandardMethod>::NAME]
         } else {
             vec![ANY_IMAGE, TangentFlowMap::NAME]
         }

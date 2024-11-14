@@ -41,7 +41,7 @@ impl<'a> Pass<'a> for TangentFlowMap {
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
-        self.sobel_pre_blur.apply_subpass(target, aux_images);
+        self.sobel_pre_blur.apply(target, aux_images);
         self.sobel.apply_subpass(target, aux_images);
         self.sobel_post_blur.apply_subpass(target, aux_images);
         self.structure_tensor.apply_subpass(target, aux_images);
