@@ -2,7 +2,7 @@
 
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{kuwahara::Kuwahara, tfm::TangentFlowMap};
+use pass::{kuwahara::Kuwahara, luminance::{Luminance, LuminanceStandardMethod}, tfm::TangentFlowMap};
 use render_graph::{NodeId, RenderGraph};
 
 mod pass;
@@ -14,7 +14,7 @@ fn main() {
 
     let mut render_graph = RenderGraph::new(input);
 
-    // let luminance = render_graph.add_node(MainLuminance::<LuminanceStandardMethod>::new(), &[NodeId::SOURCE]);
+    // let luminance = render_graph.add_node(Luminance::<LuminanceStandardMethod>::new(), &[NodeId::SOURCE]);
     let tfm = render_graph.add_node(TangentFlowMap::new(1, 5.0), &[NodeId::SOURCE]);
 
     // let voronoi = render_graph.add_node(
