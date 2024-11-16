@@ -135,6 +135,18 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
             .for_each(|(pixel, pos)| f(pixel, pos));
     }
 
+    /// Apply a function to each pixel in the image, given its UV coordinates.
+    pub fn for_each_with_uvs<Convert>(&mut self, f: Convert)
+    where
+        Convert: Fn(&mut P, Vec2) + Sync
+    {
+        self.pixels
+            .par_iter_mut()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x).as_vec2() / self.resolution.as_vec2()))
+            .for_each(|(pixel, uv)| f(pixel, uv));
+    }
+
     pub fn to_format<ToFormat: PixelFormat, ToPixel: Pixel<CHANNELS, Format = ToFormat>>(&self) -> Image<CHANNELS, ToFormat, ToPixel> {
         self.map(|pixel| {
             let channels: Result<[ToFormat; CHANNELS], _> = pixel.channels().into_iter()

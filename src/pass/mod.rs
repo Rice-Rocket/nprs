@@ -5,6 +5,7 @@ pub mod blur;
 pub mod luminance;
 pub mod kuwahara;
 pub mod voronoi;
+pub mod difference_of_gaussians;
 
 /// A render pass that represents a node in the render graph.
 pub trait Pass<'a> {
