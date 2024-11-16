@@ -1,10 +1,11 @@
 use glam::Vec3;
+use serde::Deserialize;
 
 use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, FromPixel, Pixel};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Deserialize, Clone, Copy, Debug)]
 pub struct Rgb<F: PixelFormat> {
     pub r: F,
     pub g: F,

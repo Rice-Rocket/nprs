@@ -2,40 +2,24 @@
 
 use half::f16;
 use image::{pixel::rgba::Rgba, Image};
-use pass::{difference_of_gaussians::DifferenceOfGaussians, kuwahara::Kuwahara, luminance::{Luminance, LuminanceStandardMethod}, tfm::TangentFlowMap, voronoi::RelaxedVoronoi};
+use parser::RawRenderGraph;
+use pass::{difference_of_gaussians::DifferenceOfGaussians, kuwahara::Kuwahara, luminance::{Luminance, LuminanceMethod}, tfm::TangentFlowMap, voronoi::RelaxedVoronoi};
 use render_graph::{NodeId, RenderGraph};
 
 mod pass;
 mod image;
 mod render_graph;
+mod parser;
 
 fn main() {
     let input = Image::<4, f32, Rgba<f32>>::read("images/pagoda.png").unwrap();
 
-    let mut render_graph = RenderGraph::new(input);
-
-    let luminance = render_graph.add_node(Luminance::<LuminanceStandardMethod>::new(), &[NodeId::SOURCE]);
-    let tfm = render_graph.add_node(TangentFlowMap::new(0, 0.1), &[NodeId::SOURCE]);
-
-    // let voronoi = render_graph.add_node(
-    //     RelaxedVoronoi::mosaic(5000).relax_iterations(20).weight_scale(0.5),
-    //     &[NodeId::SOURCE, tfm],
-    // );
-
-    // let kuwahara = render_graph.add_node(
-    //     Kuwahara::new(),
-    //     &[NodeId::SOURCE, tfm],
-    // );
-
-    let fdog = render_graph.add_node(
-        DifferenceOfGaussians::new(),
-        &[luminance, tfm]
-    );
+    let (mut render_graph, display_node) = RawRenderGraph::read("render_graphs/dog/basic.ron").build(input);
 
     render_graph.verify();
     render_graph.render();
 
-    let image = render_graph.pop_image(fdog).unwrap();
+    let image = render_graph.pop_image(display_node).unwrap();
 
     let image_u8 = image.to_format::<f16, Rgba<f16>>();
     image_u8.write("output/pagoda-dog.png").unwrap();

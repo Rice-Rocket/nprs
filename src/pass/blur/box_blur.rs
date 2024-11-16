@@ -1,8 +1,11 @@
 use glam::UVec2;
+use serde::Deserialize;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a box blur on the `target` image.
+#[derive(Deserialize)]
+#[serde(from = "BoxBlurBuilder")]
 pub struct BoxBlur {
     /// The size of the kernel.
     kernel_size: usize,
@@ -18,12 +21,12 @@ impl BoxBlur {
     }
 }
 
-impl<'a> Pass<'a> for BoxBlur {
-    fn name(&self) -> &'a str {
+impl Pass for BoxBlur {
+    fn name(&self) -> &'static str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> Vec<&'a str> {
+    fn dependencies(&self) -> Vec<&'static str> {
         vec![ANY_IMAGE]
     }
 
@@ -43,5 +46,16 @@ impl SubPass for BoxBlur {
         let w = 1.0 / kernel_area as f32;
 
         *target = target.convolve(&vec![w; kernel_area], UVec2::splat(self.kernel_size as u32));
+    }
+}
+
+#[derive(Deserialize)]
+pub struct BoxBlurBuilder {
+    kernel_radius: usize
+}
+
+impl From<BoxBlurBuilder> for BoxBlur {
+    fn from(builder: BoxBlurBuilder) -> Self {
+        BoxBlur::new(builder.kernel_radius)
     }
 }

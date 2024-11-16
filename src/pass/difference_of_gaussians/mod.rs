@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use aa::FDoGAntiAlias;
 use blur1::FDoGBlur1;
 use glam::{Vec2, Vec4, Vec4Swizzles};
+use serde::Deserialize;
 use threshold::FDoGBlur2Theshold;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::ANY_IMAGE};
@@ -13,6 +14,8 @@ mod blur1;
 mod threshold;
 mod aa;
 
+#[derive(Deserialize)]
+#[serde(from = "DifferenceOfGaussiansBuilder")]
 pub struct DifferenceOfGaussians {
     blur1: FDoGBlur1,
     threshold: FDoGBlur2Theshold,
@@ -173,14 +176,19 @@ impl DifferenceOfGaussians {
         self.aa.integral_convolution_stepsizes = stepsizes.zw();
         self
     }
+
+    fn threshold_mode(mut self, mode: FDoGThresholdMode) -> Self {
+        self.threshold.threshold_mode = mode;
+        self
+    }
 }
 
-impl<'a> Pass<'a> for DifferenceOfGaussians {
-    fn name(&self) -> &'a str {
+impl Pass for DifferenceOfGaussians {
+    fn name(&self) -> &'static str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> Vec<&'a str> {
+    fn dependencies(&self) -> Vec<&'static str> {
         vec![ANY_IMAGE, TangentFlowMap::NAME]
     }
 
@@ -193,6 +201,7 @@ impl<'a> Pass<'a> for DifferenceOfGaussians {
     }
 }
 
+#[derive(Deserialize)]
 pub enum FDoGThresholdMode {
     HyperbolicTangent {
         white_point: f32,
@@ -215,4 +224,30 @@ pub enum FDoGThresholdMode {
 
 fn gaussian(sigma: f32, x: f32) -> f32 {
     (1.0 / f32::sqrt(2.0 * PI * sigma * sigma)) * f32::exp(-(x * x) / (2.0 * sigma * sigma))
+}
+
+#[derive(Deserialize)]
+pub struct DifferenceOfGaussiansBuilder {
+    sigma_e: f32,
+    k: f32,
+    tau: f32,
+    sigma_m: f32,
+    integral_convolution_stepsizes: Vec4,
+    threshold_mode: FDoGThresholdMode,
+    invert: bool,
+    sigma_a: f32,
+}
+
+impl From<DifferenceOfGaussiansBuilder> for DifferenceOfGaussians {
+    fn from(builder: DifferenceOfGaussiansBuilder) -> Self {
+        DifferenceOfGaussians::new()
+            .dog_deviation(builder.sigma_e)
+            .sigma_scale(builder.k)
+            .sharpness(builder.tau)
+            .line_integral_deviation(builder.sigma_m)
+            .integral_convolution_stepsizes(builder.integral_convolution_stepsizes)
+            .threshold_mode(builder.threshold_mode)
+            .invert(builder.invert)
+            .edge_smooth_deviation(builder.sigma_a)
+    }
 }

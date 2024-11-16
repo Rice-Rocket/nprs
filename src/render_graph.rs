@@ -11,21 +11,21 @@ pub const MAIN_IMAGE: &str = "main";
 /// spot.
 pub const ANY_IMAGE: &str = "*";
 
-pub struct RenderGraph<'a> {
+pub struct RenderGraph {
     pub images: HashMap<NodeId, Image<4, f32, Rgba<f32>>>,
 
     /// The edges of the graph, where a node is directed towards its dependencies.
     pub edges: HashMap<NodeId, Vec<NodeId>>,
 
-    pub passes: HashMap<NodeId, Box<dyn Pass<'a>>>,
-    pub names: HashSet<&'a str>,
+    pub passes: HashMap<NodeId, Box<dyn Pass>>,
+    pub names: HashSet<&'static str>,
     
     root: NodeId,
     node_count: NodeId,
     resolution: UVec2,
 }
 
-impl<'a> RenderGraph<'a> {
+impl RenderGraph {
     pub fn new(image: Image<4, f32, Rgba<f32>>) -> Self {
         let resolution = image.resolution();
 
@@ -58,7 +58,7 @@ impl<'a> RenderGraph<'a> {
     }
 
     /// Adds a [`Pass`] to this [`RenderGraph`], returning its corresponding [`NodeId`].
-    pub fn add_node<P: Pass<'a> + 'static>(&mut self, node: P, dependencies: &[NodeId]) -> NodeId {
+    pub fn add_node(&mut self, node: Box<dyn Pass>, dependencies: &[NodeId]) -> NodeId {
         let id = self.node_count;
 
         for dependency in dependencies {
@@ -66,7 +66,7 @@ impl<'a> RenderGraph<'a> {
         }
 
         self.names.insert(node.name());
-        self.passes.insert(id, Box::new(node));
+        self.passes.insert(id, node);
         self.node_count += 1;
         
         id

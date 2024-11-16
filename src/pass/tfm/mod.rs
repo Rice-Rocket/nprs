@@ -1,3 +1,4 @@
+use serde::{de::Visitor, Deserialize};
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
@@ -8,6 +9,8 @@ use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SubPas
 mod sobel;
 mod structure_tensor;
 
+#[derive(Deserialize)]
+#[serde(from = "TangentFlowMapBuilder")]
 pub struct TangentFlowMap {
     sobel_pre_blur: BoxBlur,
     sobel: Sobel,
@@ -31,12 +34,12 @@ impl TangentFlowMap {
     }
 }
 
-impl<'a> Pass<'a> for TangentFlowMap {
-    fn name(&self) -> &'a str {
+impl Pass for TangentFlowMap {
+    fn name(&self) -> &'static str {
         Self::NAME
     }
 
-    fn dependencies(&self) -> Vec<&'a str> {
+    fn dependencies(&self) -> Vec<&'static str> {
         vec![MAIN_IMAGE]
     }
 
@@ -45,5 +48,17 @@ impl<'a> Pass<'a> for TangentFlowMap {
         self.sobel.apply_subpass(target, aux_images);
         self.sobel_post_blur.apply_subpass(target, aux_images);
         self.structure_tensor.apply_subpass(target, aux_images);
+    }
+}
+
+#[derive(Deserialize)]
+pub struct TangentFlowMapBuilder {
+    pre_blur_kernel_size: usize,
+    post_blur_sigma: f32,
+}
+
+impl From<TangentFlowMapBuilder> for TangentFlowMap {
+    fn from(builder: TangentFlowMapBuilder) -> Self {
+        TangentFlowMap::new(builder.pre_blur_kernel_size, builder.post_blur_sigma)
     }
 }
