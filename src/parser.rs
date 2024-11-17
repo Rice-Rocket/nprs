@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::Read};
 
 use serde::Deserialize;
+use thiserror::Error;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, RenderPass}, render_graph::{NodeId, RenderGraph}};
 
@@ -11,18 +12,36 @@ pub struct RawRenderGraph {
     display: String
 }
 
+#[derive(Debug, Error)]
+pub enum RenderGraphReadError {
+    /// An IO error.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    /// A RON error.
+    #[error(transparent)]
+    Ron(#[from] ron::error::SpannedError),
+    /// Reference to undefined pass.
+    #[error("reference to undefined pass '{0}'")]
+    UndefinedPass(String),
+    /// Duplicate pass name.
+    #[error("duplicate pass name '{0}'")]
+    DuplicateName(String),
+}
+
 impl RawRenderGraph {
-    pub fn read<P: AsRef<std::path::Path>>(path: P) -> RawRenderGraph {
-        ron::de::from_reader(std::fs::File::open(path).unwrap()).unwrap()
+    pub fn read<P: AsRef<std::path::Path>>(path: P) -> Result<RawRenderGraph, RenderGraphReadError> {
+        Ok(ron::de::from_reader(std::fs::File::open(path)?)?)
     }
 
-    pub fn build(self, input: Image<4, f32, Rgba<f32>>) -> (RenderGraph, NodeId) {
+    pub fn build(self, input: Image<4, f32, Rgba<f32>>) -> Result<(RenderGraph, NodeId), RenderGraphReadError> {
         let mut render_graph = RenderGraph::new(input);
 
         let mut nodes = HashMap::new();
 
         for (name, pass) in self.passes.into_iter() {
-            nodes.insert(name, render_graph.add_node(pass.into_pass(), &[]));
+            if nodes.insert(name.clone(), render_graph.add_node(pass.into_pass(), &[])).is_some() {
+                return Err(RenderGraphReadError::DuplicateName(name))
+            }
         }
 
         for (name, id) in nodes.iter() {
@@ -35,7 +54,7 @@ impl RawRenderGraph {
                 }
 
                 let Some(edge_id) = nodes.get(edge) else {
-                    panic!("reference to undefined pass '{}'", edge);
+                    return Err(RenderGraphReadError::UndefinedPass(edge.to_string()));
                 };
 
                 render_graph.add_edge(*id, *edge_id);
@@ -43,9 +62,9 @@ impl RawRenderGraph {
         }
 
         let Some(display_node) = nodes.get(&self.display) else {
-            panic!("reference to undefined pass '{}'", self.display);
+            return Err(RenderGraphReadError::UndefinedPass(self.display));
         };
 
-        (render_graph, *display_node)
+        Ok((render_graph, *display_node))
     }
 }

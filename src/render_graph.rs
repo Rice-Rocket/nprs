@@ -1,6 +1,7 @@
 use std::{collections::{HashMap, HashSet, VecDeque}, ops::Deref};
 
 use glam::UVec2;
+use thiserror::Error;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, Image}, pass::Pass};
 
@@ -95,14 +96,14 @@ impl RenderGraph {
         false
     }
 
-    pub fn verify(&mut self) {
+    pub fn verify(&mut self) -> Result<(), RenderGraphVerifyError> {
         let mut visited = HashSet::new();
         let mut visit_stack = VecDeque::new();
 
         // Detect cyclic graph
         for &node in self.passes.keys().chain([NodeId::SOURCE].iter()) {
             if self.is_cyclic(node, &mut visited, &mut visit_stack) {
-                panic!("graph is cyclic");
+                return Err(RenderGraphVerifyError::CyclicGraph);
             }
         }
 
@@ -126,7 +127,7 @@ impl RenderGraph {
             // In-degree = 0
             if !to_nodes.contains(&node) {
                 if found_root {
-                    panic!("graph has more than one root");
+                    return Err(RenderGraphVerifyError::MultipleRoots);
                 }
 
                 self.root = node;
@@ -135,7 +136,7 @@ impl RenderGraph {
 
             if !to_nodes.contains(&node) && !from_nodes.contains(&node) {
                 // TODO: just warn and remove
-                panic!("graph contains isolated node of id {}", node);
+                return Err(RenderGraphVerifyError::IsolatedNode(self.passes.get(&node).unwrap().name().to_string()));
             }
         }
 
@@ -144,14 +145,13 @@ impl RenderGraph {
             for (i, dependency) in pass.dependencies().into_iter().enumerate() {
                 let Some(dependency_node) = self.connections(*node).get(i) else {
                     if self.connections(*node).len() == pass.dependencies().len() {
-                        panic!("graph is missing connection between dependency '{}' and pass '{}'", dependency, pass.name());
+                        return Err(RenderGraphVerifyError::MissingConnection(dependency.to_string(), pass.name().to_string()));
                     } else {
-                        panic!(
-                            "graph has different number of edges ({}) and dependencies ({}) associated with the same pass '{}'",
+                        return Err(RenderGraphVerifyError::BadDependencyCount(
                             self.connections(*node).len(),
                             pass.dependencies().len(),
-                            pass.name()
-                        );
+                            pass.name().to_string(),
+                        ));
                     }
                 };
 
@@ -160,30 +160,29 @@ impl RenderGraph {
                 }
 
                 if !self.names.contains(dependency) {
-                    panic!("graph is missing dependency '{}' for pass '{}'", dependency, pass.name());
+                    return Err(RenderGraphVerifyError::MissingDependency(dependency.to_string(), pass.name().to_string()));
                 }
 
                 match self.passes.get(dependency_node) {
                     Some(edge_pass) => {
                         if edge_pass.name() != dependency {
-                            panic!(
-                                "graph has mismatched edge and dependency (pass '{}' depends on '{}', was given '{}' at index {})",
-                                pass.name(),
-                                dependency,
-                                edge_pass.name(),
+                            return Err(RenderGraphVerifyError::MismatchedDependency(
+                                pass.name().to_string(),
+                                dependency.to_string(),
+                                edge_pass.name().to_string(),
                                 i,
-                            );
+                            ));
                         }
                     },
                     // Main image node
                     None => {
                         if dependency != MAIN_IMAGE {
-                            panic!(
-                                "graph has mismatched edge and dependency (pass '{}' depends on '{}', was given 'main' at index {})",
-                                pass.name(),
-                                dependency,
+                            return Err(RenderGraphVerifyError::MismatchedDependency(
+                                pass.name().to_string(),
+                                dependency.to_string(),
+                                "main".to_string(),
                                 i,
-                            );
+                            ));
                         }
                     }
                 }
@@ -196,6 +195,8 @@ impl RenderGraph {
                 self.images.insert(*node, Image::<4, f32, Rgba<f32>>::new_fill(self.resolution, Rgba::<f32>::BLACK));
             }
         }
+
+        Ok(())
     }
 
     fn render_node(&mut self, node: NodeId) {
@@ -269,4 +270,30 @@ impl std::fmt::Display for NodeId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
+}
+
+#[derive(Debug, Error)]
+pub enum RenderGraphVerifyError {
+    /// Graph is cyclic.
+    #[error("graph is cyclic.")]
+    CyclicGraph,
+    /// Graph has multiple roots.
+    // TODO: report names of roots
+    #[error("graph has more than one root.")]
+    MultipleRoots,
+    /// Graph contains isolated node.
+    #[error("graph contains isolated node '{0}'")]
+    IsolatedNode(String),
+    /// Graph is missing connection between required dependency for pass.
+    #[error("graph is missing connection between dependency '{0}' and pass '{1}'")]
+    MissingConnection(String, String),
+    /// Graph has different number of edges and dependencies associated with the same pass.
+    #[error("graph has different number of edges ({0}) and dependencies ({1}) associated with the same pass '{2}'")]
+    BadDependencyCount(usize, usize, String),
+    /// Graph is missing dependency for pass.
+    #[error("graph is missing dependency '{0}' for pass '{1}'")]
+    MissingDependency(String, String),
+    /// Graph has mismatched edge and dependency.
+    #[error("graph has mismatched edge and dependency (pass '{0}' depends on '{1}', was given '{2}' at index {3})")]
+    MismatchedDependency(String, String, String, usize),
 }
