@@ -35,6 +35,8 @@ pub trait Pixel<const CHANNELS: usize>:
     fn from_channels(channels: [Self::Format; CHANNELS]) -> Self;
 
     fn channels(&self) -> [Self::Format; CHANNELS];
+
+    fn invert(self) -> Self;
 }
 
 pub trait FromPixel<T> {

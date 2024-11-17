@@ -9,6 +9,8 @@ pub struct Sampler {
 impl Sampler {
     pub const LINEAR_CLAMP: Sampler = Sampler { wrap_mode: WrapMode2D::CLAMP, filter: Filter::Linear };
     pub const NEAREST_CLAMP: Sampler = Sampler { wrap_mode: WrapMode2D::CLAMP, filter: Filter::NearestNeighbor };
+    pub const LINEAR_REPEAT: Sampler = Sampler { wrap_mode: WrapMode2D::REPEAT, filter: Filter::Linear };
+    pub const NEAREST_REPEAT: Sampler = Sampler { wrap_mode: WrapMode2D::REPEAT, filter: Filter::NearestNeighbor };
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

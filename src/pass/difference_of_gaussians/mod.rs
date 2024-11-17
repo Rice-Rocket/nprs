@@ -228,13 +228,18 @@ fn gaussian(sigma: f32, x: f32) -> f32 {
 
 #[derive(Deserialize)]
 pub struct DifferenceOfGaussiansBuilder {
+    #[serde(alias = "dog_deviation")]
     sigma_e: f32,
+    #[serde(alias = "sigma_scale")]
     k: f32,
+    #[serde(alias = "sharpness")]
     tau: f32,
+    #[serde(alias = "line_integral_deviation")]
     sigma_m: f32,
     integral_convolution_stepsizes: Vec4,
     threshold_mode: FDoGThresholdMode,
     invert: bool,
+    #[serde(alias = "edge_smooth_deviation")]
     sigma_a: f32,
 }
 

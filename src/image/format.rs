@@ -22,6 +22,8 @@ pub trait PixelFormat:
     fn from_scaled_float(v: f32) -> Self;
 
     fn to_scaled_float(self) -> f32;
+
+    fn invert(self) -> Self;
 }
 
 impl PixelFormat for u8 {
@@ -46,6 +48,10 @@ impl PixelFormat for u8 {
 
     fn to_scaled_float(self) -> f32 {
         (self as f32) / 255.0
+    }
+
+    fn invert(self) -> Self {
+        255 - self
     }
 }
 
@@ -76,6 +82,10 @@ impl PixelFormat for f16 {
     fn to_scaled_float(self) -> f32 {
         self.to_f32()
     }
+
+    fn invert(self) -> Self {
+        f16::from_f32(1.0) - self
+    }
 }
 
 impl PixelFormat for f32 {
@@ -105,5 +115,9 @@ impl PixelFormat for f32 {
 
     fn to_scaled_float(self) -> f32 {
         self
+    }
+
+    fn invert(self) -> Self {
+        1.0 - self
     }
 }

@@ -57,7 +57,7 @@ pub enum LuminanceMethod {
 }
 
 impl LuminanceMethod {
-    fn luminance(&self, r: f32, g: f32, b: f32) -> f32 {
+    pub fn luminance(&self, r: f32, g: f32, b: f32) -> f32 {
         match self {
             LuminanceMethod::Standard => 0.2126 * r + 0.7152 * g + 0.0722 * b,
             LuminanceMethod::FastPerceived => 0.299 * r + 0.587 * g + 0.114 * b,

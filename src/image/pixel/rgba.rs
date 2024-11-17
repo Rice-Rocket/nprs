@@ -69,6 +69,15 @@ impl<F: PixelFormat> Pixel<4> for Rgba<F> {
     fn channels(&self) -> [Self::Format; 4] {
         [self.r, self.g, self.b, self.a]
     }
+
+    fn invert(self) -> Self {
+        Self {
+            r: self.r.invert(),
+            g: self.g.invert(),
+            b: self.b.invert(),
+            a: self.a.invert(),
+        }
+    }
 }
 
 impl<F: PixelFormat> FromPixel<Luma<F>> for Rgba<F> {

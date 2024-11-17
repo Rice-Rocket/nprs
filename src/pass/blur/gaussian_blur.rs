@@ -23,13 +23,17 @@ impl GaussianBlur {
         let kernel_size = 2 * (sigma * 2.45).floor() as usize + 1;
 
         let mut kernel = Vec::new();
+        let mut kernel_sum = 0.0;
 
         for x in -(kernel_size as i32 / 2)..=(kernel_size as i32 / 2) {
             for y in -(kernel_size as i32 / 2)..=(kernel_size as i32 / 2) {
                 let g = gaussian(sigma, x as f32, y as f32);
+                kernel_sum += g;
                 kernel.push(g);
             }
         }
+
+        kernel.iter_mut().for_each(|v| *v /= kernel_sum);
         
         Self {
             kernel,

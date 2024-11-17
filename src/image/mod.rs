@@ -41,13 +41,17 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     }
 
     pub fn sample(&self, uv: Vec2, sampler: Sampler) -> P {
+        self.sample_absolute(uv * self.resolution.as_vec2(), sampler)
+    }
+
+    pub fn sample_absolute(&self, pos: Vec2, sampler: Sampler) -> P {
         match sampler.filter {
             Filter::NearestNeighbor => {
-                let p = (uv * self.resolution.as_vec2()).round().as_ivec2();
+                let p = pos.round().as_ivec2();
                 self.load_wrapped(p, sampler.wrap_mode)
             },
             Filter::Linear => {
-                let p = uv * self.resolution.as_vec2() - 0.5;
+                let p = pos - 0.5;
                 let pi = p.floor().as_ivec2();
                 let d = p - p.floor();
 
@@ -89,13 +93,13 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
     }
 
     /// Map a function over every pixel in the image, returning a new image.
-    pub fn map<Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<CHANNELS, ToFormat, ToPixel>
+    pub fn map<const TO_CHANNELS: usize, Convert, ToPixel, ToFormat>(&self, f: Convert) -> Image<TO_CHANNELS, ToFormat, ToPixel>
     where
-        ToPixel: Pixel<CHANNELS, Format = ToFormat>,
+        ToPixel: Pixel<TO_CHANNELS, Format = ToFormat>,
         Convert: Fn(&P) -> ToPixel + Send + Sync,
         ToFormat: PixelFormat,
     {
-        Image::<CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.par_iter().map(f).collect())
+        Image::<TO_CHANNELS, ToFormat, ToPixel>::new(self.resolution, self.pixels.par_iter().map(f).collect())
     }
 
     /// Map a function over every pixel in the image, given its position.

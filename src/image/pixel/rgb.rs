@@ -58,6 +58,14 @@ impl<F: PixelFormat> Pixel<3> for Rgb<F> {
     fn channels(&self) -> [Self::Format; 3] {
         [self.r, self.g, self.b]
     }
+
+    fn invert(self) -> Self {
+        Self {
+            r: self.r.invert(),
+            g: self.g.invert(),
+            b: self.b.invert(),
+        }
+    }
 }
 
 impl From<Rgb<f32>> for Vec3 {

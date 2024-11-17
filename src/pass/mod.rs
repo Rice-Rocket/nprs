@@ -1,8 +1,10 @@
+use blend::Blend;
 use blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur};
 use difference_of_gaussians::DifferenceOfGaussians;
 use kuwahara::Kuwahara;
 use luminance::Luminance;
 use serde::Deserialize;
+use texture::Texture;
 use tfm::TangentFlowMap;
 use voronoi::RelaxedVoronoi;
 
@@ -14,6 +16,8 @@ pub mod luminance;
 pub mod kuwahara;
 pub mod voronoi;
 pub mod difference_of_gaussians;
+pub mod blend;
+pub mod texture;
 
 /// A render pass that represents a node in the render graph.
 pub trait Pass {
@@ -39,6 +43,8 @@ pub trait SubPass {
 #[derive(Deserialize)]
 #[serde(rename = "Pass")]
 pub enum RenderPass {
+    Texture(Texture),
+    Blend(Blend),
     BoxBlur(BoxBlur),
     GaussianBlur(GaussianBlur),
     TangentFlowMap(TangentFlowMap),
@@ -51,6 +57,8 @@ pub enum RenderPass {
 impl RenderPass {
     pub fn into_pass(self) -> Box<dyn Pass> {
         match self {
+            RenderPass::Texture(p) => Box::new(p),
+            RenderPass::Blend(p) => Box::new(p),
             RenderPass::BoxBlur(p) => Box::new(p),
             RenderPass::GaussianBlur(p) => Box::new(p),
             RenderPass::TangentFlowMap(p) => Box::new(p),

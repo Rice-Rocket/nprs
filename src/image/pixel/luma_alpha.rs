@@ -26,6 +26,13 @@ impl<F: PixelFormat> Pixel<2> for LumaAlpha<F> {
     fn channels(&self) -> [Self::Format; 2] {
         [self.v, self.a]
     }
+
+    fn invert(self) -> Self {
+        Self {
+            v: self.v.invert(),
+            a: self.a.invert(),
+        }
+    }
 }
 
 impl<F: PixelFormat> FromPixel<Luma<F>> for LumaAlpha<F> {

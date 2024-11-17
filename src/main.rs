@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use half::f16;
-use image::{pixel::rgba::Rgba, Image, ImageError};
+use image::{pixel::{rgb::Rgb, rgba::Rgba}, Image, ImageError};
 use parser::{RawRenderGraph, RenderGraphReadError};
 use pass::{difference_of_gaussians::DifferenceOfGaussians, kuwahara::Kuwahara, luminance::{Luminance, LuminanceMethod}, tfm::TangentFlowMap, voronoi::RelaxedVoronoi};
 use render_graph::{NodeId, RenderGraph, RenderGraphVerifyError};
@@ -53,7 +53,7 @@ fn render() -> Result<(), NprsError> {
 
     let image = render_graph.pop_image(display_node).unwrap();
 
-    let image_u8 = image.to_format::<f16, Rgba<f16>>();
+    let image_u8 = image.map(|pixel| pixel.rgb() * pixel.a).to_format::<f16, Rgb<f16>>();
     image_u8.write(args.outfile)?;
 
     Ok(())
