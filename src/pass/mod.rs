@@ -1,14 +1,16 @@
+use std::collections::HashMap;
+
 use blend::Blend;
 use blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur};
 use difference_of_gaussians::DifferenceOfGaussians;
 use kuwahara::Kuwahara;
 use luminance::Luminance;
-use serde::Deserialize;
 use texture::Texture;
 use tfm::TangentFlowMap;
+use thiserror::Error;
 use voronoi::RelaxedVoronoi;
 
-use crate::image::{pixel::rgba::Rgba, Image};
+use crate::{image::{pixel::rgba::Rgba, Image}, parser::interpreter::{FromParsedValue, ParseValueError, ParsedValue}};
 
 pub mod tfm;
 pub mod blur;
@@ -37,35 +39,26 @@ pub trait SubPass {
     fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]);
 }
 
-// TODO: This is currently necessary for reading in the passes.
-// In the future, I'd like to have a system that allows deserialization of dyn traits (probably
-// something along the lines of what the typetag crate does)
-#[derive(Deserialize)]
-#[serde(rename = "Pass")]
-pub enum RenderPass {
-    Texture(Texture),
-    Blend(Blend),
-    BoxBlur(BoxBlur),
-    GaussianBlur(GaussianBlur),
-    TangentFlowMap(TangentFlowMap),
-    Luminance(Luminance),
-    Kuwahara(Kuwahara),
-    RelaxedVoronoi(RelaxedVoronoi),
-    DifferenceOfGaussians(DifferenceOfGaussians),
+#[derive(Debug, Error)]
+pub enum RenderPassError {
+    #[error(transparent)]
+    ParseValue(#[from] ParseValueError),
+    #[error("unknown pass '{0}'")]
+    UnknownPass(String),
 }
 
-impl RenderPass {
-    pub fn into_pass(self) -> Box<dyn Pass> {
-        match self {
-            RenderPass::Texture(p) => Box::new(p),
-            RenderPass::Blend(p) => Box::new(p),
-            RenderPass::BoxBlur(p) => Box::new(p),
-            RenderPass::GaussianBlur(p) => Box::new(p),
-            RenderPass::TangentFlowMap(p) => Box::new(p),
-            RenderPass::Luminance(p) => Box::new(p),
-            RenderPass::Kuwahara(p) => Box::new(p),
-            RenderPass::RelaxedVoronoi(p) => Box::new(p),
-            RenderPass::DifferenceOfGaussians(p) => Box::new(p),
-        }
+pub trait FromNamedParsedValue: Sized {
+    fn from_named_parsed_value(name: &str, value: ParsedValue) -> Result<Self, RenderPassError>;
+}
+
+impl FromNamedParsedValue for Box<dyn Pass> {
+    // TODO: Explicitly writing out each pass name is currently necessary for reading in the passes.
+    // In the future, I'd like to have a system that allows deserialization of dyn traits (probably
+    // something along the lines of what the typetag crate does)
+    fn from_named_parsed_value(name: &str, value: ParsedValue) -> Result<Self, RenderPassError> {
+        Ok(Box::new(match name {
+            "Luminance" => Luminance::from_parsed_value(value)?,
+            _ => return Err(RenderPassError::UnknownPass(name.to_string())),
+        }))
     }
 }

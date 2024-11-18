@@ -1,13 +1,12 @@
 use glam::{IVec2, UVec2, Vec2, Vec3};
 use rand::Rng;
-use serde::Deserialize;
 use voronoi::Point;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image}, pass::{luminance::Luminance, tfm::TangentFlowMap}, render_graph::ANY_IMAGE};
 
 use super::Pass;
 
-#[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum VoronoiRelaxWeightMode {
     /// Weights the centroids of voronoi regions based on luminance of the image. 
     /// This is only really useful with stippling.
@@ -18,7 +17,7 @@ pub enum VoronoiRelaxWeightMode {
     Frequency,
 }
 
-#[derive(Deserialize, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum VoronoiMode {
     /// Treat the centroids of the voronoi regions as stippling points.
     Stippling {
@@ -38,7 +37,6 @@ pub enum VoronoiMode {
     Mosaic,
 }
 
-#[derive(Deserialize)]
 pub struct RelaxedVoronoi {
     /// The number of points to distribute and relax.
     points: usize,

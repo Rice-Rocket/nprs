@@ -1,4 +1,3 @@
-use serde::{de::Visitor, Deserialize};
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
@@ -9,8 +8,6 @@ use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SubPas
 mod sobel;
 mod structure_tensor;
 
-#[derive(Deserialize)]
-#[serde(from = "TangentFlowMapBuilder")]
 pub struct TangentFlowMap {
     sobel_pre_blur: BoxBlur,
     sobel: Sobel,
@@ -51,7 +48,6 @@ impl Pass for TangentFlowMap {
     }
 }
 
-#[derive(Deserialize)]
 pub struct TangentFlowMapBuilder {
     pre_blur_kernel_size: usize,
     post_blur_sigma: f32,

@@ -1,11 +1,8 @@
 use glam::UVec2;
-use serde::Deserialize;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a box blur on the `target` image.
-#[derive(Deserialize)]
-#[serde(from = "BoxBlurBuilder")]
 pub struct BoxBlur {
     /// The size of the kernel.
     kernel_size: usize,
@@ -49,7 +46,6 @@ impl SubPass for BoxBlur {
     }
 }
 
-#[derive(Deserialize)]
 pub struct BoxBlurBuilder {
     kernel_radius: usize
 }

@@ -1,13 +1,18 @@
 use std::{collections::HashMap, io::Read};
 
-use serde::Deserialize;
+use ast::Statement;
+use interpreter::{Interpreter, InterpreterError};
 use thiserror::Error;
+use lalrpop_util::lalrpop_mod;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, RenderPass}, render_graph::{NodeId, RenderGraph}};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass, render_graph::{NodeId, RenderGraph}};
 
-#[derive(Deserialize)]
+pub mod ast;
+pub mod interpreter;
+lalrpop_mod!(pub grammar, "/parser/grammar.rs");
+
 pub struct RawRenderGraph {
-    passes: HashMap<String, RenderPass>,
+    passes: HashMap<String, Box<dyn Pass>>,
     edges: HashMap<String, Vec<String>>,
     display: String
 }
@@ -17,9 +22,12 @@ pub enum RenderGraphReadError {
     /// An IO error.
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    /// A RON error.
+    /// An interpreter error.
     #[error(transparent)]
-    Ron(#[from] ron::error::SpannedError),
+    Interpreter(#[from] InterpreterError),
+    /// Missing required display image.
+    #[error("missing required display image")]
+    MissingDisplay,
     /// Reference to undefined pass.
     #[error("reference to undefined pass '{0}'")]
     UndefinedPass(String),
@@ -30,16 +38,32 @@ pub enum RenderGraphReadError {
 
 impl RawRenderGraph {
     pub fn read<P: AsRef<std::path::Path>>(path: P) -> Result<RawRenderGraph, RenderGraphReadError> {
-        Ok(ron::de::from_reader(std::fs::File::open(path)?)?)
-    }
+        let data = std::fs::read_to_string(path)?;
+        let stmts: Vec<Box<Statement>> = grammar::StatementsParser::new()
+            .parse(&data)
+            .unwrap();
 
+        let mut interpreter = Interpreter::new();
+        interpreter.run(stmts);
+
+        let Some(display) = interpreter.display else {
+            return Err(RenderGraphReadError::MissingDisplay);
+        };
+
+
+        Ok(RawRenderGraph {
+            passes: interpreter.passes,
+            edges: interpreter.edges,
+            display,
+        })
+    }
     pub fn build(self, input: Image<4, f32, Rgba<f32>>) -> Result<(RenderGraph, NodeId), RenderGraphReadError> {
         let mut render_graph = RenderGraph::new(input);
 
         let mut nodes = HashMap::new();
 
         for (name, pass) in self.passes.into_iter() {
-            if nodes.insert(name.clone(), render_graph.add_node(pass.into_pass(), &[])).is_some() {
+            if nodes.insert(name.clone(), render_graph.add_node(pass, &[])).is_some() {
                 return Err(RenderGraphReadError::DuplicateName(name))
             }
         }

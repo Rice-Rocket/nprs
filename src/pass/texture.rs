@@ -1,28 +1,15 @@
 use std::path::PathBuf;
 
-use serde::{Deserialize, Deserializer};
-
 use crate::image::{pixel::rgba::Rgba, Image};
 
 use super::Pass;
 
-#[derive(Deserialize)]
 pub struct Texture {
-    #[serde(deserialize_with = "Texture::deserialize_image")]
     im: Image<4, f32, Rgba<f32>>,
 }
 
 impl Texture {
     pub const NAME: &'static str = "texture";
-    
-    fn deserialize_image<'de, D>(de: D) -> Result<Image<4, f32, Rgba<f32>>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let mut path = PathBuf::deserialize(de)?;
-        let im = Image::<4, f32, Rgba<f32>>::read(path).unwrap();
-        Ok(im)
-    }
 }
 
 impl Pass for Texture {

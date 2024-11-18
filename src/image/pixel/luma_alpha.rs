@@ -1,10 +1,8 @@
-use serde::Deserialize;
-
 use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, rgb::Rgb, rgba::Rgba, FromPixel, Pixel};
 
-#[derive(Deserialize, Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct LumaAlpha<F: PixelFormat> {
     pub v: F,
     pub a: F,

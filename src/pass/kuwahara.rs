@@ -1,12 +1,10 @@
 use glam::{Mat2, Vec2, Vec3, Vec4, Vec4Swizzles as _};
-use serde::Deserialize;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{WrapMode, WrapMode2D}, Image}, pass::tfm::TangentFlowMap, render_graph::ANY_IMAGE};
 
 use super::Pass;
 
 /// A pass that applies the kuwahara filter.
-#[derive(Deserialize)]
 pub struct Kuwahara {
     kernel_size: u32,
     sharpness: f32,

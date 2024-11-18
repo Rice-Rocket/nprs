@@ -1,13 +1,10 @@
 use std::f32::consts::PI;
 
 use glam::UVec2;
-use serde::Deserialize;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a gaussian blur on the `target` image.
-#[derive(Deserialize)]
-#[serde(from = "GaussianBlurBuilder")]
 pub struct GaussianBlur {
     /// The gaussian kernel.
     kernel: Vec<f32>,
@@ -67,7 +64,6 @@ fn gaussian(sigma: f32, x: f32, y: f32) -> f32 {
     (1.0 / f32::sqrt(2.0 * PI * sigma * sigma)) * f32::exp(-(x * x + y * y) / (2.0 * sigma * sigma))
 }
 
-#[derive(Deserialize)]
 pub struct GaussianBlurBuilder {
     sigma: f32,
 }

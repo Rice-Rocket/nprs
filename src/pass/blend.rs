@@ -1,36 +1,25 @@
 use glam::{Mat2, Vec2};
-use serde::Deserialize;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{Sampler, WrapMode2D}, Image}, render_graph::ANY_IMAGE};
 
 use super::{luminance::LuminanceMethod, Pass};
 
-#[derive(Deserialize)]
 pub struct Blend {
     mode: BlendMode,
     /// Rotation of the first image, in radians.
-    #[serde(default)]
     rotate_a: f32,
     /// Rotation of the second image, in radians.
-    #[serde(default)]
     rotate_b: f32,
     /// Scale of the first image.
-    #[serde(default = "scale_one")]
     scale_a: Vec2,
     /// Scale of the second image.
-    #[serde(default = "scale_one")]
     scale_b: Vec2,
-    #[serde(default)]
     invert_a: bool,
-    #[serde(default)]
     invert_b: bool,
-    #[serde(default)]
     invert: bool,
-    #[serde(default = "strength_one")]
     strength: f32,
 }
 
-#[derive(Deserialize)]
 pub enum BlendMode {
     /// Add the channel values of the first image with the corresponding channel values of the
     /// second image.
