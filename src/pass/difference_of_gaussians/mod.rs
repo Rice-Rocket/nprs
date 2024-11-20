@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use aa::FDoGAntiAlias;
 use blur1::FDoGBlur1;
 use glam::{Vec2, Vec4, Vec4Swizzles};
+use nprs_derive::FromParsedValue;
 use threshold::FDoGBlur2Theshold;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::ANY_IMAGE};
@@ -198,6 +199,7 @@ impl Pass for DifferenceOfGaussians {
     }
 }
 
+#[derive(FromParsedValue)]
 pub enum FDoGThresholdMode {
     HyperbolicTangent {
         white_point: f32,
@@ -222,6 +224,7 @@ fn gaussian(sigma: f32, x: f32) -> f32 {
     (1.0 / f32::sqrt(2.0 * PI * sigma * sigma)) * f32::exp(-(x * x) / (2.0 * sigma * sigma))
 }
 
+#[derive(FromParsedValue)]
 pub struct DifferenceOfGaussiansBuilder {
     sigma_e: f32,
     k: f32,

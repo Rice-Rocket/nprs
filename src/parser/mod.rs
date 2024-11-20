@@ -1,14 +1,15 @@
 use std::{collections::HashMap, io::Read};
 
 use ast::Statement;
-use interpreter::{Interpreter, InterpreterError};
+use interpreter::{Interpreter, InterpreterError, ParsedValue};
 use thiserror::Error;
 use lalrpop_util::lalrpop_mod;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::Pass, render_graph::{NodeId, RenderGraph}};
+use crate::{image::{pixel::rgba::Rgba, Image, ImageError}, pass::Pass, render_graph::{NodeId, RenderGraph}};
 
 pub mod ast;
 pub mod interpreter;
+pub mod parse_primitives;
 lalrpop_mod!(pub grammar, "/parser/grammar.rs");
 
 pub struct RawRenderGraph {
@@ -91,4 +92,24 @@ impl RawRenderGraph {
 
         Ok((render_graph, *display_node))
     }
+}
+
+pub trait FromParsedValue: Sized {
+    fn from_parsed_value(value: ParsedValue) -> Result<Self, ParseValueError>;
+}
+
+#[derive(Debug, Error)]
+pub enum ParseValueError {
+    #[error("incorrect type. expected {0} but got {1}")]
+    WrongType(String, String),
+    #[error("duplicate field '{0}'")]
+    DuplicateField(String),
+    #[error("unknown field '{0}'")]
+    UnknownField(String),
+    #[error("missing required field '{0}'")]
+    MissingField(String),
+    #[error("unknown enum variant '{0}'")]
+    UnknownVariant(String),
+    #[error(transparent)]
+    Image(#[from] ImageError),
 }

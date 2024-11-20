@@ -12,13 +12,16 @@ pub Statement: Box<Statement> = {
     <pass:Ident> "!" => Box::new(Statement::Display {<>}),
 };
 
+pub Exprs = Comma<Expr>;
+
 pub Expr: Box<Expr> = {
     Int => Box::new(Expr::Int(<>)),
     Float => Box::new(Expr::Float(<>)),
     Path => Box::new(Expr::Path(<>)),
     "." <var:Ident> => Box::new(Expr::VarAccess(var)),
     Ident => Box::new(Expr::Ident(<>)),
-    <name:Ident> "{" <fields:Fields> "}" => Box::new(Expr::Struct {<>})
+    <name:Ident> "(" <fields:Exprs> ")" => Box::new(Expr::TupleStruct {<>}),
+    <name:Ident> "{" <fields:Fields> "}" => Box::new(Expr::Struct {<>}),
 };
 
 pub Fields = Comma<Field>;

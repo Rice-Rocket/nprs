@@ -1,10 +1,11 @@
 use glam::Vec3;
+use nprs_derive::FromParsedValue;
 
-use crate::image::format::PixelFormat;
+use crate::{image::format::PixelFormat, parser::FromParsedValue};
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, FromPixel, Pixel};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(FromParsedValue, Clone, Copy, Debug)]
 pub struct Rgb<F: PixelFormat> {
     pub r: F,
     pub g: F,

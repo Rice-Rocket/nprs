@@ -1,8 +1,10 @@
-use crate::image::format::PixelFormat;
+use nprs_derive::FromParsedValue;
+
+use crate::{image::format::PixelFormat, parser::FromParsedValue};
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgb::Rgb, FromPixel, Pixel};
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(FromParsedValue, Clone, Copy, Debug, PartialEq)]
 pub struct Rgba<F: PixelFormat> {
     pub r: F,
     pub g: F,

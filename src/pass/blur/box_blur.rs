@@ -1,4 +1,5 @@
 use glam::UVec2;
+use nprs_derive::FromParsedValue;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
@@ -46,6 +47,7 @@ impl SubPass for BoxBlur {
     }
 }
 
+#[derive(FromParsedValue)]
 pub struct BoxBlurBuilder {
     kernel_radius: usize
 }

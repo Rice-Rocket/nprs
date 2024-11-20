@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::UVec2;
+use nprs_derive::FromParsedValue;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
@@ -64,6 +65,7 @@ fn gaussian(sigma: f32, x: f32, y: f32) -> f32 {
     (1.0 / f32::sqrt(2.0 * PI * sigma * sigma)) * f32::exp(-(x * x + y * y) / (2.0 * sigma * sigma))
 }
 
+#[derive(FromParsedValue)]
 pub struct GaussianBlurBuilder {
     sigma: f32,
 }

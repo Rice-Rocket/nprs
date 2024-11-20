@@ -7,6 +7,8 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallel
 use thiserror::Error;
 use sampler::{Filter, Sampler, WrapMode2D};
 
+use crate::parser::{interpreter::ParsedValue, FromParsedValue, ParseValueError};
+
 pub mod pixel;
 pub mod format;
 pub mod sampler;
@@ -345,4 +347,14 @@ pub enum ImageError {
     /// A PNG Encoding Error.
     #[error(transparent)]
     PngEncoding(#[from] png::EncodingError)
+}
+
+impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> FromParsedValue for Image<CHANNELS, F, P> {
+    fn from_parsed_value(value: ParsedValue) -> Result<Self, ParseValueError> {
+        if let ParsedValue::Path(path) = value {
+            Ok(Self::read(path)?)
+        } else {
+            Err(ParseValueError::WrongType(String::from("path"), value.type_name()))
+        }
+    }
 }

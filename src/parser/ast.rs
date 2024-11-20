@@ -25,6 +25,10 @@ pub enum Expr {
     Path(String),
     VarAccess(String),
     Ident(String),
+    TupleStruct {
+        name: String,
+        fields: Vec<Box<Expr>>,
+    },
     Struct {
         name: String,
         fields: Vec<Box<Field>>,

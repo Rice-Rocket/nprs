@@ -1,3 +1,4 @@
+use nprs_derive::FromParsedValue;
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
@@ -48,6 +49,7 @@ impl Pass for TangentFlowMap {
     }
 }
 
+#[derive(FromParsedValue)]
 pub struct TangentFlowMapBuilder {
     pre_blur_kernel_size: usize,
     post_blur_sigma: f32,

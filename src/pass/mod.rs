@@ -10,7 +10,7 @@ use tfm::TangentFlowMap;
 use thiserror::Error;
 use voronoi::RelaxedVoronoi;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, parser::interpreter::{FromParsedValue, ParseValueError, ParsedValue}};
+use crate::{image::{pixel::rgba::Rgba, Image}, parser::{interpreter::ParsedValue, FromParsedValue, ParseValueError}};
 
 pub mod tfm;
 pub mod blur;

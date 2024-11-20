@@ -34,10 +34,11 @@ pub enum ParsedValue {
     Path(String),
     Bool(bool),
     UnitStruct(String),
+    /// A struct with named fields or a tuple struct with fields named `0`, `1`, `2`, etc.
     Struct {
         name: String,
         fields: HashMap<String, Box<ParsedValue>>,
-    }
+    },
 }
 
 impl ParsedValue {
@@ -138,6 +139,19 @@ impl Interpreter {
                     _ => Ok(ParsedValue::UnitStruct(ident)),
                 }
             },
+            Expr::TupleStruct { name, fields } => {
+                let mut field_values = HashMap::new();
+
+                for (i, field_val) in fields.into_iter().enumerate() {
+                    let value = self.run_expr(*field_val)?;
+                    field_values.insert(i.to_string(), Box::new(value));
+                }
+
+                Ok(ParsedValue::Struct {
+                    name,
+                    fields: field_values,
+                })
+            },
             Expr::Struct { name, fields } => {
                 let mut field_values = HashMap::new();
 
@@ -153,22 +167,4 @@ impl Interpreter {
             },
         }
     }
-}
-
-pub trait FromParsedValue: Sized {
-    fn from_parsed_value(value: ParsedValue) -> Result<Self, ParseValueError>;
-}
-
-#[derive(Debug, Error)]
-pub enum ParseValueError {
-    #[error("incorrect type. expected {0} but got {1}")]
-    WrongType(String, String),
-    #[error("duplicate field '{0}'")]
-    DuplicateField(String),
-    #[error("unknown field '{0}'")]
-    UnknownField(String),
-    #[error("missing required field '{0}'")]
-    MissingField(String),
-    #[error("unknown enum variant '{0}'")]
-    UnknownVariant(String),
 }

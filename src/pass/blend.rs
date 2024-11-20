@@ -1,9 +1,11 @@
 use glam::{Mat2, Vec2};
+use nprs_derive::FromParsedValue;
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{Sampler, WrapMode2D}, Image}, render_graph::ANY_IMAGE};
 
 use super::{luminance::LuminanceMethod, Pass};
 
+#[derive(FromParsedValue)]
 pub struct Blend {
     mode: BlendMode,
     /// Rotation of the first image, in radians.
@@ -20,6 +22,7 @@ pub struct Blend {
     strength: f32,
 }
 
+#[derive(FromParsedValue)]
 pub enum BlendMode {
     /// Add the channel values of the first image with the corresponding channel values of the
     /// second image.

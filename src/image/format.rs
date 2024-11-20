@@ -2,11 +2,14 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use half::f16;
 
+use crate::parser::FromParsedValue;
+
 pub trait PixelFormat: 
     Add<Self, Output = Self>
     + Sub<Self, Output = Self>
     + Mul<Self, Output = Self>
     + Div<Self, Output = Self>
+    + FromParsedValue
     + Send + Sync
     + Sized + Clone + Copy
 {
