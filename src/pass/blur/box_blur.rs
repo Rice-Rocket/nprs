@@ -4,6 +4,8 @@ use nprs_derive::FromParsedValue;
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a box blur on the `target` image.
+#[derive(FromParsedValue)]
+#[nprs(from = BoxBlurBuilder)]
 pub struct BoxBlur {
     /// The size of the kernel.
     kernel_size: usize,

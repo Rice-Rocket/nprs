@@ -56,9 +56,16 @@ impl FromNamedParsedValue for Box<dyn Pass> {
     // In the future, I'd like to have a system that allows deserialization of dyn traits (probably
     // something along the lines of what the typetag crate does)
     fn from_named_parsed_value(name: &str, value: ParsedValue) -> Result<Self, RenderPassError> {
-        Ok(Box::new(match name {
-            "Luminance" => Luminance::from_parsed_value(value)?,
+        Ok(match name {
+            "Texture" => Box::new(Texture::from_parsed_value(value)?),
+            "Blend" => Box::new(Blend::from_parsed_value(value)?),
+            "Luminance" => Box::new(Luminance::from_parsed_value(value)?),
+            "TangentFlowMap" => Box::new(TangentFlowMap::from_parsed_value(value)?),
+            "BoxBlur" => Box::new(BoxBlur::from_parsed_value(value)?),
+            "GaussianBlur" => Box::new(GaussianBlur::from_parsed_value(value)?),
+            "Kuwahara" => Box::new(Kuwahara::from_parsed_value(value)?),
+            "DifferenceOfGaussians" => Box::new(DifferenceOfGaussians::from_parsed_value(value)?),
             _ => return Err(RenderPassError::UnknownPass(name.to_string())),
-        }))
+        })
     }
 }

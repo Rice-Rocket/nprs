@@ -7,6 +7,7 @@ edition = "2021"
 proc-macro2 = "1.0.89"
 quote = "1.0.37"
 syn = { version = "2.0.87", features = [ "visit", "visit-mut" ] }
+darling = "0.20.10"
 
 [lib]
 proc-macro = true

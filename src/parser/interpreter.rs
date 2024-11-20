@@ -125,7 +125,11 @@ impl Interpreter {
         match expr {
             Expr::Int(v) => Ok(ParsedValue::Int(v)),
             Expr::Float(v) => Ok(ParsedValue::Float(v)),
-            Expr::Path(p) => Ok(ParsedValue::Path(p)),
+            Expr::Path(mut p) => {
+                p.pop();
+                p.remove(0);
+                Ok(ParsedValue::Path(p))
+            },
             Expr::VarAccess(var) => {
                 match self.symbols.get(&var) {
                     Some(v) => Ok(v.clone()),

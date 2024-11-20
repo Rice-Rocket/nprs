@@ -11,9 +11,13 @@ pub struct Kuwahara {
     kernel_size: u32,
     sharpness: f32,
     hardness: f32,
+    #[nprs(default = 1.0)]
     alpha: f32,
+    #[nprs(default = 0.58)]
     zero_crossing: f32,
+    #[nprs(default = None)]
     zeta: Option<f32>,
+    #[nprs(default = 1)]
     passes: u32,
 }
 

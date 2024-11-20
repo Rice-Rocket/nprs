@@ -9,16 +9,24 @@ use super::{luminance::LuminanceMethod, Pass};
 pub struct Blend {
     mode: BlendMode,
     /// Rotation of the first image, in radians.
+    #[nprs(default = 0.0)]
     rotate_a: f32,
     /// Rotation of the second image, in radians.
+    #[nprs(default = 0.0)]
     rotate_b: f32,
     /// Scale of the first image.
+    #[nprs(default = Vec2::ONE)]
     scale_a: Vec2,
     /// Scale of the second image.
+    #[nprs(default = Vec2::ONE)]
     scale_b: Vec2,
+    #[nprs(default = false)]
     invert_a: bool,
+    #[nprs(default = false)]
     invert_b: bool,
+    #[nprs(default = false)]
     invert: bool,
+    #[nprs(default = 1.0)]
     strength: f32,
 }
 
@@ -88,6 +96,3 @@ impl Pass for Blend {
         })
     }
 }
-
-fn scale_one() -> Vec2 { Vec2::ONE }
-fn strength_one() -> f32 { 1.0 }

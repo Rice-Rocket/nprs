@@ -1,15 +1,65 @@
+use darling::{ast, FromDeriveInput, FromField, FromVariant};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{DataEnum, Field, Fields, FieldsNamed, FieldsUnnamed, Ident};
+use syn::{Expr, Ident, Type};
 
-pub fn expand_from_parsed_value(input: syn::DeriveInput) -> syn::Result<TokenStream> {
+#[derive(FromDeriveInput)]
+#[darling(attributes(nprs))]
+struct Input {
+    ident: Ident,
+    generics: syn::Generics,
+    data: darling::ast::Data<InputVariant, InputField>,
+    #[darling(default)]
+    from: Option<Ident>,
+}
+
+#[derive(FromField)]
+#[darling(attributes(nprs))]
+struct InputField {
+    ident: Option<Ident>,
+    ty: Type,
+    #[darling(default)]
+    default: Option<Expr>,
+    #[darling(default)]
+    rename: Option<Ident>,
+    #[darling(default)]
+    alias: Option<Ident>,
+}
+
+#[derive(FromVariant)]
+#[darling(attributes(nprs))]
+struct InputVariant {
+    ident: Ident,
+    fields: darling::ast::Fields<InputField>,
+}
+
+pub fn expand_from_parsed_value(derive_input: syn::DeriveInput) -> syn::Result<TokenStream> {
+    let input = Input::from_derive_input(&derive_input)?;
+
+    let ident = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+
+    if let Some(from_value) = input.from {
+        Ok(quote! {
+            impl #impl_generics ::nprs::parser::FromParsedValue for #ident #ty_generics #where_clause {
+                fn from_parsed_value(__value: ::nprs::parser::interpreter::ParsedValue) -> Result<Self, ::nprs::parser::ParseValueError> {
+                    Ok(Self::from(#from_value::from_parsed_value(__value)?))
+                }
+            }
+        })
+    } else {
+        expand_standard(input)
+    }
+}
+
+fn expand_standard(input: Input) -> syn::Result<TokenStream> {
     let ident = &input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let body = match input.data {
-        syn::Data::Struct(data) => expand_struct(quote! { #ident }, data.fields)?,
-        syn::Data::Enum(data) => expand_enum(ident, data)?,
-        syn::Data::Union(_) => return Err(syn::Error::new(ident.span(), "cannot derive `FromParseValue` for union")),
+        ast::Data::Struct(data) => expand_struct(quote! { #ident }, data)?,
+        ast::Data::Enum(data) => expand_enum(ident, data)?,
     };
 
     Ok(quote! {
@@ -21,7 +71,7 @@ pub fn expand_from_parsed_value(input: syn::DeriveInput) -> syn::Result<TokenStr
     })
 }
 
-fn expand_struct(ident: TokenStream, fields: Fields) -> syn::Result<TokenStream> {
+fn expand_struct(ident: TokenStream, fields: ast::Fields<InputField>) -> syn::Result<TokenStream> {
     let body = expand_struct_fields(ident, fields)?;
 
     Ok(quote! {
@@ -34,19 +84,19 @@ fn expand_struct(ident: TokenStream, fields: Fields) -> syn::Result<TokenStream>
     })
 }
 
-fn expand_struct_fields(ident: TokenStream, fields: Fields) -> syn::Result<TokenStream> {
-    match fields {
-        syn::Fields::Named(named_fields) => Ok(expand_named_fields(ident, named_fields)?),
-        syn::Fields::Unnamed(unnamed_fields) => Ok(expand_unnamed_fields(ident, unnamed_fields)?),
-        syn::Fields::Unit => Ok(quote! { Ok(#ident) }),
+fn expand_struct_fields(ident: TokenStream, fields: ast::Fields<InputField>) -> syn::Result<TokenStream> {
+    match fields.style {
+        ast::Style::Struct => Ok(expand_named_fields(ident, fields.fields)?),
+        ast::Style::Tuple => Ok(expand_unnamed_fields(ident, fields.fields)?),
+        ast::Style::Unit => Ok(quote! { Ok(#ident) }),
     }
 }
 
-fn expand_enum(ident: &Ident, data: DataEnum) -> syn::Result<TokenStream> {
-    let variant_names: Vec<_> = data.variants.iter()
+fn expand_enum(ident: &Ident, variants: Vec<InputVariant>) -> syn::Result<TokenStream> {
+    let variant_names: Vec<_> = variants.iter()
         .map(|variant| variant.ident.to_string()).collect();
 
-    let variant_values = data.variants.into_iter()
+    let variant_values = variants.into_iter()
         .map(|variant| {
             let variant_ident = variant.ident;
             expand_struct_fields(quote! { #ident::#variant_ident }, variant.fields)
@@ -70,8 +120,8 @@ fn expand_enum(ident: &Ident, data: DataEnum) -> syn::Result<TokenStream> {
     })
 }
 
-fn expand_named_fields(ident: TokenStream, named_fields: FieldsNamed) -> syn::Result<TokenStream> {
-    let fields: Vec<_> = named_fields.named.into_iter()
+fn expand_named_fields(ident: TokenStream, named_fields: Vec<InputField>) -> syn::Result<TokenStream> {
+    let fields: Vec<_> = named_fields.into_iter()
         .enumerate()
         .map(|(i, field)| expand_struct_field(i, field))
         .collect();
@@ -98,8 +148,8 @@ fn expand_named_fields(ident: TokenStream, named_fields: FieldsNamed) -> syn::Re
     })
 }
 
-fn expand_unnamed_fields(ident: TokenStream, unnamed_fields: FieldsUnnamed) -> syn::Result<TokenStream> {
-    let fields: Vec<_> = unnamed_fields.unnamed.into_iter()
+fn expand_unnamed_fields(ident: TokenStream, unnamed_fields: Vec<InputField>) -> syn::Result<TokenStream> {
+    let fields: Vec<_> = unnamed_fields.into_iter()
         .enumerate()
         .map(|(i, field)| expand_struct_field(i, field))
         .collect();
@@ -139,9 +189,14 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
             let varname = &field.var_name;
             let ty = &field.ty;
             let string = &field.string;
+            let patterns = if let Some(alias) = &field.alias {
+                quote! { #string | #alias }
+            } else {
+                quote! { #string }
+            };
 
             quote! {
-                #string => {
+                #patterns => {
                     if #varname.is_some() {
                         return Err(::nprs::parser::ParseValueError::DuplicateField(String::from(#string)));
                     };
@@ -156,10 +211,16 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
             let varname = &field.var_name;
             let string = &field.string;
 
-            quote! {
-                let Some(#varname) = #varname else {
-                    return Err(::nprs::parser::ParseValueError::MissingField(String::from(#string)));
-                };
+            if let Some(default) = &field.default {
+                quote! {
+                    let #varname = #varname.unwrap_or_else(|| #default);
+                }
+            } else {
+                quote! {
+                    let Some(#varname) = #varname else {
+                        return Err(::nprs::parser::ParseValueError::MissingField(String::from(#string)));
+                    };
+                }
             }
         });
 
@@ -183,21 +244,36 @@ struct StructFieldData {
     var_name: Ident,
     string: TokenStream,
     ty: TokenStream,
+    default: Option<TokenStream>,
+    alias: Option<TokenStream>,
 }
 
-fn expand_struct_field(index: usize, field: Field) -> StructFieldData {
+fn expand_struct_field(index: usize, field: InputField) -> StructFieldData {
     let ty = field.ty;
+
+    let default = field.default.map(|default| quote! { #default });
     
     match &field.ident {
         Some(var_name_raw) => {
             let var_name = format_ident!("__{}", var_name_raw);
-            let string = var_name_raw.to_string();
+            let string = if let Some(rename) = field.rename {
+                rename.to_string()
+            } else {
+                var_name_raw.to_string()
+            };
+
+            let alias = field.alias.map(|alias| {
+                let alias_str = alias.to_string();
+                quote! { #alias_str }
+            });
 
             StructFieldData {
                 var_name_raw: Some(var_name_raw.clone()),
                 var_name,
                 string: quote! { #string },
                 ty: quote! { #ty },
+                default,
+                alias,
             }
         },
         None => {
@@ -209,6 +285,8 @@ fn expand_struct_field(index: usize, field: Field) -> StructFieldData {
                 var_name,
                 string: quote! { #string },
                 ty: quote! { #ty },
+                default,
+                alias: None,
             }
         },
     }

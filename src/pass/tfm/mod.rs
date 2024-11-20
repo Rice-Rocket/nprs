@@ -9,6 +9,8 @@ use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SubPas
 mod sobel;
 mod structure_tensor;
 
+#[derive(FromParsedValue)]
+#[nprs(from = TangentFlowMapBuilder)]
 pub struct TangentFlowMap {
     sobel_pre_blur: BoxBlur,
     sobel: Sobel,

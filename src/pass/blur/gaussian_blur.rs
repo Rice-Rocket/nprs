@@ -6,6 +6,8 @@ use nprs_derive::FromParsedValue;
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a gaussian blur on the `target` image.
+#[derive(FromParsedValue)]
+#[nprs(from = GaussianBlurBuilder)]
 pub struct GaussianBlur {
     /// The gaussian kernel.
     kernel: Vec<f32>,

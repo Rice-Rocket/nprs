@@ -45,7 +45,7 @@ impl RawRenderGraph {
             .unwrap();
 
         let mut interpreter = Interpreter::new();
-        interpreter.run(stmts);
+        interpreter.run(stmts)?;
 
         let Some(display) = interpreter.display else {
             return Err(RenderGraphReadError::MissingDisplay);

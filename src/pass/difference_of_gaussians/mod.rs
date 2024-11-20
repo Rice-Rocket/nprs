@@ -14,6 +14,8 @@ mod blur1;
 mod threshold;
 mod aa;
 
+#[derive(FromParsedValue)]
+#[nprs(from = DifferenceOfGaussiansBuilder)]
 pub struct DifferenceOfGaussians {
     blur1: FDoGBlur1,
     threshold: FDoGBlur2Theshold,
@@ -226,13 +228,18 @@ fn gaussian(sigma: f32, x: f32) -> f32 {
 
 #[derive(FromParsedValue)]
 pub struct DifferenceOfGaussiansBuilder {
+    #[nprs(alias = dog_deviation)]
     sigma_e: f32,
+    #[nprs(alias = sigma_scale)]
     k: f32,
+    #[nprs(alias = sharpness)]
     tau: f32,
+    #[nprs(alias = line_integral_deviation)]
     sigma_m: f32,
     integral_convolution_stepsizes: Vec4,
     threshold_mode: FDoGThresholdMode,
     invert: bool,
+    #[nprs(alias = edge_smooth_deviation)]
     sigma_a: f32,
 }
 
