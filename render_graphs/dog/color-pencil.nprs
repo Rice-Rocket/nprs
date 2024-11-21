@@ -1,0 +1,140 @@
+phi = 10.0;
+base_dog = DifferenceOfGaussians {
+    dog_deviation: 2.0,
+    sigma_scale: 0.8,
+    sharpness: 100.0,
+    line_integral_deviation: 2.0,
+    integral_convolution_stepsizes: Vec4 (1.0, 1.0, 1.0, 1.0),
+    threshold_mode: None,
+    edge_smooth_deviation: 2.0,
+    invert: false,
+};
+base_blend = Blend {
+    mode: AlphaMultiply,
+    scale_a: Vec2 (0.2, 0.2),
+    invert_a: true,
+    invert_b: true,
+    invert: true,
+};
+
+hatching := Texture {
+    im: "textures/hatching.png",
+};
+
+luminance := Luminance {
+    method: Standard,
+};
+
+tfm := TangentFlowMap {
+    pre_blur_kernel_size: 0,
+    post_blur_sigma: 0.1,
+};
+
+dog1 := DifferenceOfGaussians {
+    threshold_mode: HyperbolicTangent {
+        white_point: 0.1,
+        phi: .phi,
+    },
+    ..base_dog
+};
+
+dog2 := DifferenceOfGaussians {
+    threshold_mode: HyperbolicTangent {
+        white_point: 0.175,
+        phi: .phi,
+    },
+    ..base_dog
+};
+
+dog3 := DifferenceOfGaussians {
+    threshold_mode: HyperbolicTangent {
+        white_point: 0.25,
+        phi: .phi,
+    },
+    ..base_dog
+};
+
+dog4 := DifferenceOfGaussians {
+    threshold_mode: HyperbolicTangent {
+        white_point: 0.3,
+        phi: .phi,
+    },
+    ..base_dog
+};
+
+blend1 := Blend {
+    rotate_a: 0.0,
+    ..base_blend
+};
+
+blend2 := Blend {
+    rotate_a: 0.5,
+    ..base_blend
+};
+
+blend3 := Blend {
+    rotate_a: 1.0,
+    ..base_blend
+};
+
+blend4 := Blend {
+    rotate_a: 1.5,
+    ..base_blend
+};
+
+layer12 := Blend {
+    mode: Multiply,
+};
+
+layer34 := Blend {
+    mode: Multiply,
+};
+
+layer_final := Blend {
+    mode: Multiply,
+};
+
+final_blur := GaussianBlur {
+    sigma: 2.0,
+};
+
+final_hatch := Blend {
+    mode: Multiply,
+};
+
+paper := Texture {
+    im: "textures/paper.png",
+};
+
+layer_paper := Blend {
+    mode: Multiply,
+    scale_b: Vec2 (1.0, 1.0),
+    strength: 0.15,
+};
+
+blend_color := Blend {
+    mode: Multiply,
+    invert_a: true,
+    invert_b: true,
+    invert: true,
+};
+
+luminance -> source;
+tfm -> source;
+dog1 -> luminance, tfm;
+dog2 -> luminance, tfm;
+dog3 -> luminance, tfm;
+dog4 -> luminance, tfm;
+blend1 -> hatching, dog1;
+blend2 -> hatching, dog2;
+blend3 -> hatching, dog3;
+blend4 -> hatching, dog4;
+layer12 -> blend1, blend2;
+layer34 -> blend3, blend4;
+layer_final -> layer12, layer34;
+final_blur -> layer_final;
+final_hatch -> final_blur, layer_final;
+blend_color -> final_hatch, source;
+layer_paper -> blend_color, paper;
+
+layer_paper!

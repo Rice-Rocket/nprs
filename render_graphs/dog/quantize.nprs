@@ -1,0 +1,29 @@
+luminance := Luminance {
+    method: Standard
+};
+
+tfm := TangentFlowMap {
+    pre_blur_kernel_size: 0,
+    post_blur_sigma: 0.1,
+};
+
+dog := DifferenceOfGaussians {
+    dog_deviation: 2.0,
+    sigma_scale: 0.8,
+    sharpness: 100.0,
+    line_integral_deviation: 2.0,
+    integral_convolution_stepsizes: Vec4 (1.0, 1.0, 1.0, 1.0),
+    threshold_mode: Quantization {
+        palette_size: 3.0,
+        phi: 1.0,
+        white_point: 0.5,
+    },
+    invert: false,
+    edge_smooth_deviation: 2.0,
+};
+
+luminance -> source;
+tfm -> source;
+dog -> luminance, tfm;
+
+dog!

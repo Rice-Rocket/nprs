@@ -1,0 +1,15 @@
+tfm := TangentFlowMap {
+    pre_blur_kernel_size: 1,
+    post_blur_sigma: 2.0,
+};
+
+kuwahara := Kuwahara {
+    kernel_size: 20,
+    sharpness: 8.0,
+    hardness: 8.0,
+};
+
+tfm -> source;
+kuwahara -> source, tfm;
+
+kuwahara!

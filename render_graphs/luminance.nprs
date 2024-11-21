@@ -1,0 +1,7 @@
+lum := Luminance {
+    method: Standard
+};
+
+lum -> source;
+
+lum!
