@@ -30,8 +30,36 @@ pub enum Expr {
         fields: Vec<Box<Expr>>,
     },
     Struct {
+        /// The name of the struct.
+        ///
+        /// ```md
+        /// **Person** {
+        ///     name: "bob", 
+        ///     age: 20, 
+        ///     ..adult
+        /// }
+        /// ```
         name: String,
+        /// The fields of the struct.
+        ///
+        /// ```md
+        /// Person {
+        ///     **name: "bob",**
+        ///     **age: 20,**
+        ///     ..adult
+        /// }
+        /// ```
         fields: Vec<Box<Field>>,
+        /// The struct updater, if applicable.
+        ///
+        /// ```md
+        /// Person {
+        ///     name: "bob",
+        ///     age: 20,
+        ///     **..adult**
+        /// }
+        /// ```
+        update: Option<String>,
     },
 }
 

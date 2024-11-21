@@ -23,6 +23,8 @@ pub enum InterpreterError {
     InvalidPassAssignment(String),
     #[error("multiple display calls")]
     MultipleDisplays,
+    #[error("invalid type. expected {0} but found {1}")]
+    InvalidType(String, String),
     #[error(transparent)]
     RenderPass(#[from] RenderPassError),
 }
@@ -60,13 +62,13 @@ impl ParsedValue {
 
     pub fn type_name(&self) -> String {
         match self {
-            ParsedValue::Int(_) => "int",
-            ParsedValue::Float(_) => "float",
-            ParsedValue::Path(_) => "path",
-            ParsedValue::Bool(_) => "bool",
-            ParsedValue::UnitStruct(_) => "unit struct",
-            ParsedValue::Struct { name, fields } => "struct",
-        }.to_string()
+            ParsedValue::Int(_) => "int".to_string(),
+            ParsedValue::Float(_) => "float".to_string(),
+            ParsedValue::Path(_) => "path".to_string(),
+            ParsedValue::Bool(_) => "bool".to_string(),
+            ParsedValue::UnitStruct(name) => format!("unit struct `{}`", name),
+            ParsedValue::Struct { name, .. } => format!("struct `{}`", name)
+        }
     }
 }
 
@@ -156,13 +158,29 @@ impl Interpreter {
                     fields: field_values,
                 })
             },
-            Expr::Struct { name, fields } => {
+            Expr::Struct { name, fields, update } => {
                 let mut field_values = HashMap::new();
 
                 for field in fields {
                     let value = self.run_expr(*field.value)?;
                     field_values.insert(field.ident, Box::new(value));
                 }
+
+                if let Some(update) = update {
+                    let (update_name, update_fields) = match self.symbols.get(&update) {
+                        Some(v) => v.clone().struct_properties()
+                            .ok_or(InterpreterError::InvalidType(format!("struct `{}`", name), v.type_name()))?,
+                        None => return Err(InterpreterError::UndefinedVariable(update)),
+                    };
+
+                    if update_name != name {
+                        return Err(InterpreterError::InvalidType(format!("struct `{}`", name), format!("struct `{}`", update_name)))
+                    }
+
+                    for (update_field, update_value) in update_fields {
+                        field_values.entry(update_field).or_insert(update_value);
+                    }
+                };
 
                 Ok(ParsedValue::Struct {
                     name,

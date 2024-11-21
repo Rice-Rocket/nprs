@@ -21,7 +21,8 @@ pub Expr: Box<Expr> = {
     "." <var:Ident> => Box::new(Expr::VarAccess(var)),
     Ident => Box::new(Expr::Ident(<>)),
     <name:Ident> "(" <fields:Exprs> ")" => Box::new(Expr::TupleStruct {<>}),
-    <name:Ident> "{" <fields:Fields> "}" => Box::new(Expr::Struct {<>}),
+    <name:Ident> "{" <fields:Fields> "}" => Box::new(Expr::Struct { name, fields, update: None }),
+    <name:Ident> "{" <fields:Fields> ".." <update:Ident> "}" => Box::new(Expr::Struct { name, fields, update: Some(update) }),
 };
 
 pub Fields = Comma<Field>;

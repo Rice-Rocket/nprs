@@ -35,14 +35,20 @@ pub enum RenderGraphReadError {
     /// Duplicate pass name.
     #[error("duplicate pass name '{0}'")]
     DuplicateName(String),
+    #[error("invalid syntax")]
+    Parse,
 }
 
 impl RawRenderGraph {
     pub fn read<P: AsRef<std::path::Path>>(path: P) -> Result<RawRenderGraph, RenderGraphReadError> {
         let data = std::fs::read_to_string(path)?;
-        let stmts: Vec<Box<Statement>> = grammar::StatementsParser::new()
-            .parse(&data)
-            .unwrap();
+        let stmts: Vec<Box<Statement>> = match grammar::StatementsParser::new().parse(&data) {
+            Ok(v) => v,
+            Err(e) => {
+                println!("{}", e);
+                return Err(RenderGraphReadError::Parse);
+            },
+        };
 
         let mut interpreter = Interpreter::new();
         interpreter.run(stmts)?;
