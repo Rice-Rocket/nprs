@@ -1,13 +1,13 @@
 use std::{collections::HashMap, marker::PhantomData};
 
-use nprs_derive::FromParsedValue;
+use nprs_derive::{FromParsedValue, Pass};
 
-use crate::{image::{pixel::rgba::Rgba, Image}, parser::{interpreter::ParsedValue, FromParsedValue, ParseValueError}, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::rgba::Rgba, Image}, parser::{interpreter::ParsedValue, FromParsedValue, ParseValueError}, pass::{PassRegistration, RegistrationValueParser, RenderPassError}, render_graph::ANY_IMAGE};
 
 use super::{Pass, SubPass};
 
 /// A pass that computes the luminance of each pixel on the `target` image.
-#[derive(FromParsedValue)]
+#[derive(Pass, FromParsedValue)]
 pub struct Luminance {
     method: LuminanceMethod,
 }

@@ -33,7 +33,7 @@ struct InputVariant {
     fields: darling::ast::Fields<InputField>,
 }
 
-pub fn expand_from_parsed_value(derive_input: syn::DeriveInput) -> syn::Result<TokenStream> {
+pub(crate) fn expand_from_parsed_value(derive_input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let input = Input::from_derive_input(&derive_input)?;
 
     let ident = &input.ident;

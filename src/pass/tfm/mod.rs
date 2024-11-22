@@ -1,4 +1,4 @@
-use nprs_derive::FromParsedValue;
+use nprs_derive::{FromParsedValue, Pass};
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
@@ -9,7 +9,7 @@ use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SubPas
 mod sobel;
 mod structure_tensor;
 
-#[derive(FromParsedValue)]
+#[derive(Pass, FromParsedValue)]
 #[nprs(from = TangentFlowMapBuilder)]
 pub struct TangentFlowMap {
     sobel_pre_blur: BoxBlur,

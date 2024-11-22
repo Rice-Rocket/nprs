@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use aa::FDoGAntiAlias;
 use blur1::FDoGBlur1;
 use glam::{Vec2, Vec4, Vec4Swizzles};
-use nprs_derive::FromParsedValue;
+use nprs_derive::{FromParsedValue, Pass};
 use threshold::FDoGBlur2Theshold;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::ANY_IMAGE};
@@ -14,7 +14,7 @@ mod blur1;
 mod threshold;
 mod aa;
 
-#[derive(FromParsedValue)]
+#[derive(Pass, FromParsedValue)]
 #[nprs(from = DifferenceOfGaussiansBuilder)]
 pub struct DifferenceOfGaussians {
     blur1: FDoGBlur1,

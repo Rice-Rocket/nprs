@@ -1,5 +1,5 @@
 use glam::{IVec2, UVec2, Vec2, Vec3};
-use nprs_derive::FromParsedValue;
+use nprs_derive::{FromParsedValue, Pass};
 use rand::Rng;
 use voronoi::Point;
 
@@ -38,7 +38,7 @@ pub enum VoronoiMode {
     Mosaic,
 }
 
-#[derive(FromParsedValue)]
+#[derive(Pass, FromParsedValue)]
 pub struct RelaxedVoronoi {
     /// The number of points to distribute and relax.
     points: usize,

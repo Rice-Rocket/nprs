@@ -1,12 +1,12 @@
 use std::f32::consts::PI;
 
 use glam::UVec2;
-use nprs_derive::FromParsedValue;
+use nprs_derive::{FromParsedValue, Pass};
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a gaussian blur on the `target` image.
-#[derive(FromParsedValue)]
+#[derive(Pass, FromParsedValue)]
 #[nprs(from = GaussianBlurBuilder)]
 pub struct GaussianBlur {
     /// The gaussian kernel.
