@@ -13,8 +13,6 @@ pub struct Luminance {
 }
 
 impl Luminance {
-    pub const NAME: &'static str = "luminance";
-    
     pub fn new(method: LuminanceMethod) -> Self {
         Self { method }
     }
@@ -22,7 +20,7 @@ impl Luminance {
 
 impl Pass for Luminance {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {

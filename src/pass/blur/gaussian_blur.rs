@@ -17,8 +17,6 @@ pub struct GaussianBlur {
 }
 
 impl GaussianBlur {
-    pub const NAME: &'static str = "gaussianblur";
-
     pub fn new(sigma: f32) -> Self {
         let kernel_size = 2 * (sigma * 2.45).floor() as usize + 1;
 
@@ -44,7 +42,7 @@ impl GaussianBlur {
 
 impl Pass for GaussianBlur {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {

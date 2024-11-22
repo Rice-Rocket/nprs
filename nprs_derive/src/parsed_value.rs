@@ -43,8 +43,8 @@ pub(crate) fn expand_from_parsed_value(derive_input: syn::DeriveInput) -> syn::R
     if let Some(from_value) = input.from {
         Ok(quote! {
             impl #impl_generics ::nprs::parser::FromParsedValue for #ident #ty_generics #where_clause {
-                fn from_parsed_value(__value: ::nprs::parser::interpreter::ParsedValue) -> Result<Self, ::nprs::parser::ParseValueError> {
-                    Ok(Self::from(#from_value::from_parsed_value(__value)?))
+                fn from_parsed_value(__value: ::nprs::parser::interpreter::ParsedValue) -> ::nprs::__private::Result<Self, ::nprs::parser::ParseValueError> {
+                    ::nprs::__private::Result::Ok(Self::from(<#from_value as ::nprs::parser::FromParsedValue>::from_parsed_value(__value)?))
                 }
             }
         })
@@ -64,7 +64,7 @@ fn expand_standard(input: Input) -> syn::Result<TokenStream> {
 
     Ok(quote! {
         impl #impl_generics ::nprs::parser::FromParsedValue for #ident #ty_generics #where_clause {
-            fn from_parsed_value(__value: ::nprs::parser::interpreter::ParsedValue) -> Result<Self, ::nprs::parser::ParseValueError> {
+            fn from_parsed_value(__value: ::nprs::parser::interpreter::ParsedValue) -> ::nprs::__private::Result<Self, ::nprs::parser::ParseValueError> {
                 #body
             }
         }
@@ -76,8 +76,8 @@ fn expand_struct(ident: TokenStream, fields: ast::Fields<InputField>) -> syn::Re
 
     Ok(quote! {
         let __type_name = __value.type_name();
-        let Some((__name, __fields)) = __value.struct_properties() else {
-            return Err(::nprs::parser::ParseValueError::WrongType(String::from("struct, tuple struct, or unit struct"), __type_name));
+        let ::nprs::__private::Option::Some((__name, __fields)) = __value.struct_properties() else {
+            return ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::WrongType(::nprs::__private::String::from("struct, tuple struct, or unit struct"), __type_name));
         };
 
         #body
@@ -88,7 +88,7 @@ fn expand_struct_fields(ident: TokenStream, fields: ast::Fields<InputField>) -> 
     match fields.style {
         ast::Style::Struct => Ok(expand_named_fields(ident, fields.fields)?),
         ast::Style::Tuple => Ok(expand_unnamed_fields(ident, fields.fields)?),
-        ast::Style::Unit => Ok(quote! { Ok(#ident) }),
+        ast::Style::Unit => Ok(quote! { ::nprs::__private::Result::Ok(#ident) }),
     }
 }
 
@@ -105,8 +105,8 @@ fn expand_enum(ident: &Ident, variants: Vec<InputVariant>) -> syn::Result<TokenS
 
     Ok(quote! {
         let __type_name = __value.type_name();
-        let Some((__name, __fields)) = __value.struct_properties() else {
-            return Err(::nprs::parser::ParseValueError::WrongType(String::from("struct variant, tuple struct variant or unit struct variant"), __type_name));
+        let ::nprs::__private::Option::Some((__name, __fields)) = __value.struct_properties() else {
+            return ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::WrongType(::nprs::__private::String::from("struct variant, tuple struct variant or unit struct variant"), __type_name));
         };
 
         match __name.as_str() {
@@ -115,7 +115,7 @@ fn expand_enum(ident: &Ident, variants: Vec<InputVariant>) -> syn::Result<TokenS
                     #variant_values
                 },
             )*
-            _ => Err(::nprs::parser::ParseValueError::UnknownVariant(__name)),
+            _ => ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::UnknownVariant(__name)),
         }
     })
 }
@@ -142,7 +142,7 @@ fn expand_named_fields(ident: TokenStream, named_fields: Vec<InputField>) -> syn
     Ok(quote! {
         #collect_fields
 
-        Ok(#ident {
+        ::nprs::__private::Result::Ok(#ident {
             #(#filled_fields)*
         })
     })
@@ -169,7 +169,7 @@ fn expand_unnamed_fields(ident: TokenStream, unnamed_fields: Vec<InputField>) ->
     Ok(quote! {
         #collect_fields
 
-        Ok(#ident(#(#filled_fields)*))
+        ::nprs::__private::Result::Ok(#ident(#(#filled_fields)*))
     })
 }
 
@@ -180,7 +180,7 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
             let ty = &field.ty;
 
             quote! {
-                let mut #varname: Option<#ty> = None;
+                let mut #varname: ::nprs::__private::Option<#ty> = ::nprs::__private::Option::None;
             }
         });
 
@@ -198,10 +198,10 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
             quote! {
                 #patterns => {
                     if #varname.is_some() {
-                        return Err(::nprs::parser::ParseValueError::DuplicateField(String::from(#string)));
+                        return ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::DuplicateField(::nprs::__private::String::from(#string)));
                     };
 
-                    #varname = Some(<#ty>::from_parsed_value(*__value)?);
+                    #varname = ::nprs::__private::Option::Some(<#ty as ::nprs::parser::FromParsedValue>::from_parsed_value(*__value)?);
                 },
             }
         });
@@ -217,8 +217,8 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
                 }
             } else {
                 quote! {
-                    let Some(#varname) = #varname else {
-                        return Err(::nprs::parser::ParseValueError::MissingField(String::from(#string)));
+                    let ::nprs::__private::Option::Some(#varname) = #varname else {
+                        return ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::MissingField(::nprs::__private::String::from(#string)));
                     };
                 }
             }
@@ -230,7 +230,7 @@ fn expand_parsed_fields(fields: Vec<StructFieldData>) -> syn::Result<TokenStream
         for (__param, __value) in __fields.into_iter() {
             match __param.as_str() {
                 #(#name_matches)*
-                _ => return Err(::nprs::parser::ParseValueError::UnknownField(__param.to_string())),
+                _ => return ::nprs::__private::Result::Err(::nprs::parser::ParseValueError::UnknownField(::nprs::__private::String::from(__param))),
             }
         };
         

@@ -43,13 +43,9 @@ pub enum BlendMode {
     Overlay(LuminanceMethod),
 }
 
-impl Blend {
-    pub const NAME: &'static str = "blend";
-}
-
 impl Pass for Blend {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {

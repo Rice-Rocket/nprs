@@ -68,8 +68,6 @@ pub struct RelaxedVoronoi {
 }
 
 impl RelaxedVoronoi {
-    pub const NAME: &'static str = "relaxedvoronoi";
-
     /// Create a new [`RelaxedVoronoi`] pass that performs stippling-like effect on the given number of
     /// `points`.
     pub fn stipple(points: usize) -> RelaxedVoronoi {
@@ -208,14 +206,14 @@ impl RelaxedVoronoi {
 
 impl Pass for RelaxedVoronoi {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
         if let VoronoiRelaxWeightMode::Luminance = self.relax_mode {
-            vec![ANY_IMAGE, Luminance::NAME]
+            vec![ANY_IMAGE, Luminance::PASS_NAME]
         } else {
-            vec![ANY_IMAGE, TangentFlowMap::NAME]
+            vec![ANY_IMAGE, TangentFlowMap::PASS_NAME]
         }
     }
 

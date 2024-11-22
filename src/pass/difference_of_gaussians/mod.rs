@@ -23,8 +23,6 @@ pub struct DifferenceOfGaussians {
 }
 
 impl DifferenceOfGaussians {
-    pub const NAME: &'static str = "difference_of_gaussians";
-    
     pub fn new() -> Self {
         Self {
             blur1: FDoGBlur1 {
@@ -185,11 +183,11 @@ impl DifferenceOfGaussians {
 
 impl Pass for DifferenceOfGaussians {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
-        vec![ANY_IMAGE, TangentFlowMap::NAME]
+        vec![ANY_IMAGE, TangentFlowMap::PASS_NAME]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {

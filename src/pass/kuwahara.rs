@@ -22,8 +22,6 @@ pub struct Kuwahara {
 }
 
 impl Kuwahara {
-    pub const NAME: &'static str = "kuwahara";
-
     /// Creates a new [`Kuwahara`] pass with default options.
     pub fn new() -> Kuwahara {
         Kuwahara {
@@ -84,11 +82,11 @@ impl Kuwahara {
 
 impl Pass for Kuwahara {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
-        vec![ANY_IMAGE, TangentFlowMap::NAME]
+        vec![ANY_IMAGE, TangentFlowMap::PASS_NAME]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {

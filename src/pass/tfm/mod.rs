@@ -19,8 +19,6 @@ pub struct TangentFlowMap {
 }
 
 impl TangentFlowMap {
-    pub const NAME: &'static str = "tangent_flow_map";
-
     pub fn new(
         pre_blur_kernel_size: usize,
         post_blur_sigma: f32,
@@ -36,7 +34,7 @@ impl TangentFlowMap {
 
 impl Pass for TangentFlowMap {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {

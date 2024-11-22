@@ -12,8 +12,6 @@ pub struct BoxBlur {
 }
 
 impl BoxBlur {
-    pub const NAME: &'static str = "boxblur";
-
     pub fn new(kernel_radius: usize) -> Self {
         let kernel_size = 2 * kernel_radius + 1;
 
@@ -23,7 +21,7 @@ impl BoxBlur {
 
 impl Pass for BoxBlur {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {

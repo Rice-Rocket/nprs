@@ -11,13 +11,9 @@ pub struct Texture {
     im: Image<4, f32, Rgba<f32>>,
 }
 
-impl Texture {
-    pub const NAME: &'static str = "texture";
-}
-
 impl Pass for Texture {
     fn name(&self) -> &'static str {
-        Self::NAME
+        Self::PASS_NAME
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
