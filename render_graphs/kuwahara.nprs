@@ -1,10 +1,12 @@
+kernel_size = *kernel_size | 20;
+
 tfm := TangentFlowMap {
     pre_blur_kernel_size: 1,
     post_blur_sigma: 2.0,
 };
 
 kuwahara := Kuwahara {
-    kernel_size: 20,
+    kernel_size: .kernel_size,
     sharpness: 8.0,
     hardness: 8.0,
 };

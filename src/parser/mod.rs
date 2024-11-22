@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::Read};
 
 use ast::Statement;
+use cli::PassArg;
 use interpreter::{Interpreter, InterpreterError, ParsedValue};
 use thiserror::Error;
 use lalrpop_util::lalrpop_mod;
@@ -9,6 +10,7 @@ use crate::{image::{pixel::rgba::Rgba, Image, ImageError}, pass::Pass, render_gr
 
 pub mod ast;
 pub mod interpreter;
+pub mod cli;
 pub mod parse_primitives;
 lalrpop_mod!(pub grammar, "/parser/grammar.rs");
 
@@ -40,7 +42,7 @@ pub enum RenderGraphReadError {
 }
 
 impl RawRenderGraph {
-    pub fn read<P: AsRef<std::path::Path>>(path: P) -> Result<RawRenderGraph, RenderGraphReadError> {
+    pub fn read<P: AsRef<std::path::Path>>(path: P, args: Vec<PassArg>) -> Result<RawRenderGraph, RenderGraphReadError> {
         let data = std::fs::read_to_string(path)?;
         let stmts: Vec<Box<Statement>> = match grammar::StatementsParser::new().parse(&data) {
             Ok(v) => v,
@@ -50,7 +52,7 @@ impl RawRenderGraph {
             },
         };
 
-        let mut interpreter = Interpreter::new();
+        let mut interpreter = Interpreter::new(args);
         interpreter.run(stmts)?;
 
         let Some(display) = interpreter.display else {

@@ -2,12 +2,12 @@
 
 extern crate self as nprs;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use clap::Parser;
 use half::f16;
 use image::{pixel::{rgb::Rgb, rgba::Rgba}, Image, ImageError};
-use parser::{RawRenderGraph, RenderGraphReadError};
+use parser::{cli::PassArg, RawRenderGraph, RenderGraphReadError};
 use pass::{difference_of_gaussians::DifferenceOfGaussians, kuwahara::Kuwahara, luminance::{Luminance, LuminanceMethod}, tfm::TangentFlowMap, voronoi::RelaxedVoronoi};
 use render_graph::{NodeId, RenderGraph, RenderGraphVerifyError};
 use thiserror::Error;
@@ -28,6 +28,8 @@ struct Args {
 
     /// The file to write the processed image to.
     outfile: PathBuf,
+
+    args: Vec<PassArg>,
 }
 
 #[derive(Debug, Error)]
@@ -48,7 +50,7 @@ fn render() -> Result<(), NprsError> {
 
     let input = Image::<4, f32, Rgba<f32>>::read(args.input)?;
 
-    let (mut render_graph, display_node) = RawRenderGraph::read(args.render_graph)?.build(input)?;
+    let (mut render_graph, display_node) = RawRenderGraph::read(args.render_graph, args.args)?.build(input)?;
 
     render_graph.verify()?;
     render_graph.render();

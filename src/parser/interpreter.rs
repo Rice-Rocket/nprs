@@ -4,13 +4,14 @@ use thiserror::Error;
 
 use crate::pass::{FromNamedParsedValue, Pass, RenderPassError};
 
-use super::ast::{Expr, Statement};
+use super::{ast::{Expr, Statement}, cli::PassArg};
 
 pub struct Interpreter {
     pub passes: HashMap<String, Box<dyn Pass>>,
     pub edges: HashMap<String, Vec<String>>,
     pub display: Option<String>,
     symbols: HashMap<String, ParsedValue>,
+    args: HashMap<String, Expr>,
 }
 
 #[derive(Debug, Error)]
@@ -25,6 +26,8 @@ pub enum InterpreterError {
     MultipleDisplays,
     #[error("invalid type. expected {0} but found {1}")]
     InvalidType(String, String),
+    #[error("required argument '{0}' was not provided")]
+    MissingArgument(String),
     #[error(transparent)]
     RenderPass(#[from] RenderPassError),
 }
@@ -73,12 +76,19 @@ impl ParsedValue {
 }
 
 impl Interpreter {
-    pub fn new() -> Self {
+    pub fn new(args: Vec<PassArg>) -> Self {
+        let mut args_map = HashMap::new();
+
+        for arg in args {
+            args_map.insert(arg.name, arg.value);
+        }
+
         Self {
             passes: HashMap::new(),
             edges: HashMap::new(),
             display: None,
             symbols: HashMap::new(),
+            args: args_map,
         }
     }
 
@@ -143,6 +153,20 @@ impl Interpreter {
                     "true" => Ok(ParsedValue::Bool(true)),
                     "false" => Ok(ParsedValue::Bool(false)),
                     _ => Ok(ParsedValue::UnitStruct(ident)),
+                }
+            },
+            Expr::Argument { name, default } => {
+                match self.args.get(&name) {
+                    Some(expr) => {
+                        self.run_expr(expr.clone())
+                    },
+                    None => {
+                        if let Some(default) = default {
+                            self.run_expr(*default)
+                        } else {
+                            Err(InterpreterError::MissingArgument(name))
+                        }
+                    },
                 }
             },
             Expr::TupleStruct { name, fields } => {

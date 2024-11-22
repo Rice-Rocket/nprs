@@ -17,18 +17,33 @@ pub enum Statement {
     },
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[allow(clippy::vec_box)]
 pub enum Expr {
+    /// An integer.
     Int(i32),
+    /// A floating point number.
     Float(f32),
+    /// A path to a file.
     Path(String),
+    /// A variable access, yielding its value if set and failing if not.
     VarAccess(String),
     Ident(String),
-    TupleStruct {
+    /// An argument passed in and read from the command line.
+    Argument {
+        /// The name of the argument as it will be read from the command line.
         name: String,
+        /// An optional default value that will be used if no argument is given.
+        default: Option<Box<Expr>>,
+    },
+    /// A tuple struct.
+    TupleStruct {
+        /// The name of the struct.
+        name: String,
+        /// The fields of the struct, in order.
         fields: Vec<Box<Expr>>,
     },
+    /// A struct or unit struct. Unit structs have no fields.
     Struct {
         /// The name of the struct.
         ///
@@ -63,7 +78,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Field {
     pub ident: String,
     pub value: Box<Expr>,
