@@ -1,11 +1,11 @@
 use glam::{Mat2, Vec2};
-use nprs_derive::{FromParsedValue, Pass};
+use nprs_derive::{FromParsedValue, ParsePass};
 
 use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{Sampler, WrapMode2D}, Image}, render_graph::ANY_IMAGE};
 
 use super::{luminance::LuminanceMethod, Pass};
 
-#[derive(Pass, FromParsedValue)]
+#[derive(ParsePass, FromParsedValue)]
 pub struct Blend {
     mode: BlendMode,
     /// Rotation of the first image, in radians.

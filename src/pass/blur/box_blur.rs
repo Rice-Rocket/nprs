@@ -1,10 +1,10 @@
 use glam::UVec2;
-use nprs_derive::{FromParsedValue, Pass};
+use nprs_derive::{FromParsedValue, ParsePass};
 
 use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}, render_graph::ANY_IMAGE};
 
 /// A pass that performs a box blur on the `target` image.
-#[derive(Pass, FromParsedValue)]
+#[derive(ParsePass, FromParsedValue)]
 #[nprs(from = BoxBlurBuilder)]
 pub struct BoxBlur {
     /// The size of the kernel.

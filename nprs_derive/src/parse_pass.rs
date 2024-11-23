@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub(crate) fn expand_pass(input: syn::DeriveInput) -> syn::Result<TokenStream> {
+pub(crate) fn expand_parse_pass(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let vis = input.vis;
     let ident = input.ident;
     let ident_str = ident.to_string();

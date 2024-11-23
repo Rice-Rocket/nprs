@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use nprs_derive::{FromParsedValue, Pass};
+use nprs_derive::{FromParsedValue, ParsePass};
 
 use crate::image::{pixel::rgba::Rgba, Image};
 
 use super::Pass;
 
-#[derive(Pass, FromParsedValue)]
+#[derive(ParsePass, FromParsedValue)]
 pub struct Texture {
     im: Image<4, f32, Rgba<f32>>,
 }
