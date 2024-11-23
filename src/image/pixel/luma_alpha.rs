@@ -1,6 +1,6 @@
 use nprs_derive::FromParsedValue;
 
-use crate::{image::format::PixelFormat, parser::FromParsedValue};
+use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, rgb::Rgb, rgba::Rgba, FromPixel, Pixel};
 

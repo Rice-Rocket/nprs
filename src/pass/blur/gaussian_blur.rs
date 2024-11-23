@@ -56,7 +56,7 @@ impl Pass for GaussianBlur {
 }
 
 impl SubPass for GaussianBlur {
-    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, _aux_images: &[&Image<4, f32, Rgba<f32>>]) {
         *target = target.convolve(&self.kernel, UVec2::splat(self.kernel_size as u32));
     }
 }

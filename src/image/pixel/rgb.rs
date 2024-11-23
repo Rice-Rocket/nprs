@@ -1,7 +1,7 @@
 use glam::Vec3;
 use nprs_derive::FromParsedValue;
 
-use crate::{image::format::PixelFormat, parser::FromParsedValue};
+use crate::image::format::PixelFormat;
 
 use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, FromPixel, Pixel};
 

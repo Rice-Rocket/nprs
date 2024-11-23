@@ -22,8 +22,8 @@ impl clap::builder::TypedValueParser for PassArgParser {
 
     fn parse_ref(
         &self,
-        cmd: &clap::Command,
-        arg: Option<&clap::Arg>,
+        _cmd: &clap::Command,
+        _arg: Option<&clap::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, clap::Error> {
         let v = value.to_str().ok_or(clap::Error::new(clap::error::ErrorKind::InvalidUtf8))?;

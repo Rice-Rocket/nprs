@@ -305,9 +305,8 @@ impl<const CHANNELS: usize, P: Pixel<CHANNELS, Format = f32>> Image<CHANNELS, f3
         assert!(kernel.len() as u32 == kernel_size.x * kernel_size.y);
 
         let kernel_size = kernel_size.as_ivec2();
-        let mut image = Image::<CHANNELS, f32, P>::new_fill(self.resolution, P::BLACK);
 
-        self.map_with_positions(|pixel, pos| {
+        self.map_with_positions(|_pixel, pos| {
             let mut c = P::BLACK;
 
             for i in -(kernel_size.x / 2)..=(kernel_size.x / 2) {

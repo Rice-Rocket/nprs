@@ -1,6 +1,6 @@
 use glam::{Vec2, Vec3};
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::SubPass};
 
 pub struct TangentFlowStructureTensor;
 

@@ -1,6 +1,6 @@
 use glam::UVec2;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, pass::{Pass, SubPass}};
+use crate::{image::{pixel::rgba::Rgba, Image}, pass::SubPass};
 
 pub struct Sobel;
 
