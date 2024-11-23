@@ -1,7 +1,7 @@
 nprs
 ====
 
-The nprs crate provides advanced utilities for creating and running non-photorealistic image effects. It also comes with numerous built-in effects and its own language for defining custom effect pipelines.
+The nprs crate provides advanced utilities for creating and running non-photorealistic image effects. It comes with numerous built-in effects and its own language for defining custom effect pipelines.
 
 ## Basic Usage
 

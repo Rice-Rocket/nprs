@@ -15,6 +15,7 @@ pub enum Statement {
     Display {
         pass: String,
     },
+    Error,
 }
 
 #[derive(Clone, Debug)]
@@ -76,6 +77,7 @@ pub enum Expr {
         /// ```
         update: Option<String>,
     },
+    Error,
 }
 
 #[derive(Clone, Debug)]

@@ -43,14 +43,19 @@ pub enum RenderGraphReadError {
 
 impl RawRenderGraph {
     pub fn read<P: AsRef<std::path::Path>>(path: P, args: Vec<PassArg>) -> Result<RawRenderGraph, RenderGraphReadError> {
+        let mut errors = Vec::new();
+
         let data = std::fs::read_to_string(path)?;
-        let stmts: Vec<Box<Statement>> = match grammar::StatementsParser::new().parse(&data) {
-            Ok(v) => v,
-            Err(e) => {
-                println!("{}", e);
-                return Err(RenderGraphReadError::Parse);
-            },
-        };
+        let stmts: Vec<Box<Statement>> = grammar::StatementsParser::new().parse(&mut errors, &data).unwrap();
+
+        let has_err = !errors.is_empty();
+        for err in errors {
+            println!("{}", err.error);
+        }
+
+        if has_err {
+            return Err(RenderGraphReadError::Parse);
+        }
 
         let mut interpreter = Interpreter::new(args);
         interpreter.run(stmts)?;

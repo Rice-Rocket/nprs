@@ -32,13 +32,12 @@ impl clap::builder::TypedValueParser for PassArgParser {
         let name = parts.next().ok_or(clap::Error::new(clap::error::ErrorKind::NoEquals))?;
         let value_str = parts.next().ok_or(clap::Error::new(clap::error::ErrorKind::InvalidValue))?;
 
-        let value = match super::grammar::ExprParser::new().parse(value_str) {
-            Ok(v) => v,
-            Err(e) => {
-                println!("{}", e);
-                return Err(clap::Error::new(clap::error::ErrorKind::InvalidValue));
-            },
-        };
+        let mut errors = Vec::new();
+        let value = super::grammar::ExprParser::new().parse(&mut errors, value_str).unwrap();
+
+        if !errors.is_empty() {
+            return Err(clap::Error::new(clap::error::ErrorKind::ValueValidation));
+        }
 
         Ok(PassArg {
             name: name.to_string(),

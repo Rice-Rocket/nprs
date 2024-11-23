@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 extern crate self as nprs;
 
 use std::path::PathBuf;

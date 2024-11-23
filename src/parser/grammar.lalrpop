@@ -1,7 +1,8 @@
 use std::str::FromStr;
 use super::ast::{Expr, Field, Statement};
+use lalrpop_util::ErrorRecovery;
 
-grammar;
+grammar<'err>(errors: &'err mut Vec<ErrorRecovery<usize, Token<'input>, &'static str>>);
 
 pub Statements = Semicolon<Statement>;
 
@@ -10,6 +11,7 @@ pub Statement: Box<Statement> = {
     <name:Ident> ":=" <value:Expr> => Box::new(Statement::Pass {<>}),
     <pass:Ident> "->" <dependencies:Comma<Ident>> => Box::new(Statement::Edge {<>}),
     <pass:Ident> "!" => Box::new(Statement::Display {<>}),
+    ! => { errors.push(<>); Box::new(Statement::Error) },
 };
 
 pub Exprs = Comma<Expr>;
@@ -25,6 +27,7 @@ pub Expr: Box<Expr> = {
     <name:Ident> "(" <fields:Exprs> ")" => Box::new(Expr::TupleStruct {<>}),
     <name:Ident> "{" <fields:Fields> "}" => Box::new(Expr::Struct { name, fields, update: None }),
     <name:Ident> "{" <fields:Fields> ".." <update:Ident> "}" => Box::new(Expr::Struct { name, fields, update: Some(update) }),
+    ! => { errors.push(<>); Box::new(Expr::Error) },
 };
 
 pub Fields = Comma<Field>;

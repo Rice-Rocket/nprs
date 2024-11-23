@@ -128,6 +128,7 @@ impl Interpreter {
 
                 self.display = Some(pass);
             },
+            Statement::Error => unreachable!(),
         }
 
         Ok(())
@@ -211,6 +212,7 @@ impl Interpreter {
                     fields: field_values,
                 })
             },
+            Expr::Error => unreachable!(),
         }
     }
 }
