@@ -190,7 +190,7 @@ impl RenderGraph {
         }
 
         // Prepare auxiliary images
-        for (node, pass) in self.passes.iter() {
+        for node in self.passes.keys() {
             if !self.images.contains_key(node) {
                 self.images.insert(*node, Image::<4, f32, Rgba<f32>>::new_fill(self.resolution, Rgba::<f32>::BLACK));
             }

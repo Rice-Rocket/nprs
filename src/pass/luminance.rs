@@ -1,8 +1,6 @@
-use std::{collections::HashMap, marker::PhantomData};
-
 use nprs_derive::{FromParsedValue, ParsePass};
 
-use crate::{image::{pixel::rgba::Rgba, Image}, parser::{interpreter::ParsedValue, FromParsedValue, ParseValueError}, pass::{PassRegistration, RegistrationValueParser, RenderPassError}, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::ANY_IMAGE};
 
 use super::{Pass, SubPass};
 
@@ -42,7 +40,7 @@ impl Pass for Luminance {
 }
 
 impl SubPass for Luminance {
-    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, _aux_images: &[&Image<4, f32, Rgba<f32>>]) {
         target.for_each(|pixel| {
             let l = self.method.luminance(pixel.r, pixel.g, pixel.b);
             pixel.r = l;

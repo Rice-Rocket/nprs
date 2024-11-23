@@ -98,7 +98,7 @@ macro_rules! impl_parse_vec {
             impl FromParsedValue for $ty {
                 fn from_parsed_value(value: ParsedValue) -> Result<Self, ParseValueError> {
                     let type_name = value.type_name();
-                    let Some((name, fields)) = value.struct_properties() else {
+                    let Some((_name, fields)) = value.struct_properties() else {
                         return Err(ParseValueError::WrongType(String::from($expected), type_name));
                     };
 

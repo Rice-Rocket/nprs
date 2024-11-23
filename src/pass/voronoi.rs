@@ -1,9 +1,9 @@
-use glam::{IVec2, UVec2, Vec2, Vec3};
+use glam::{IVec2, Vec2, Vec3};
 use nprs_derive::{FromParsedValue, ParsePass};
 use rand::Rng;
 use voronoi::Point;
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel as _}, sampler::{Sampler, WrapMode2D}, Image}, parser::FromParsedValue, pass::{luminance::Luminance, tfm::TangentFlowMap}, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::rgba::Rgba, sampler::{Sampler, WrapMode2D}, Image}, pass::{luminance::Luminance, tfm::TangentFlowMap}, render_graph::ANY_IMAGE};
 
 use super::Pass;
 
@@ -104,8 +104,8 @@ impl RelaxedVoronoi {
     pub fn background_color(mut self, color: Rgba<f32>) -> Self {
         if let VoronoiMode::Stippling {
             background,
-            stipple,
-            stipple_radius,
+            stipple: _,
+            stipple_radius: _,
         } = &mut self.mode {
             *background = color;
         }
@@ -118,9 +118,9 @@ impl RelaxedVoronoi {
     /// Defaults to `Rgba(0.0, 0.0, 0.0, 1.0)`
     pub fn stipple_color(mut self, color: Rgba<f32>) -> Self {
         if let VoronoiMode::Stippling {
-            background,
+            background: _,
             stipple,
-            stipple_radius,
+            stipple_radius: _,
         } = &mut self.mode {
             *stipple = color;
         }
@@ -133,8 +133,8 @@ impl RelaxedVoronoi {
     /// Defaults to `1.0`
     pub fn stipple_radius(mut self, radius: f32) -> Self {
         if let VoronoiMode::Stippling {
-            background,
-            stipple,
+            background: _,
+            stipple: _,
             stipple_radius,
         } = &mut self.mode {
             *stipple_radius = radius;
@@ -241,7 +241,7 @@ impl Pass for RelaxedVoronoi {
         }
         
         // Relax voronoi diagram
-        for i in 0..self.relax_iterations {
+        for _ in 0..self.relax_iterations {
             let vor_diagram = voronoi::voronoi(seeds, res.x as f64);
             let faces = voronoi::make_polygons(&vor_diagram);
 
@@ -386,7 +386,7 @@ impl UnsortedPolygon {
         p / self.vertices.len() as f32
     }
 
-    fn sort(mut self) -> SortedPolygon {
+    fn sort(self) -> SortedPolygon {
         let mut sorted = Vec::new();
         let centroid = self.vertex_centroid();
 

@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use nprs_derive::{FromParsedValue, ParsePass};
 
 use crate::image::{pixel::rgba::Rgba, Image};

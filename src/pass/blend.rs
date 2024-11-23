@@ -1,7 +1,7 @@
 use glam::{Mat2, Vec2};
 use nprs_derive::{FromParsedValue, ParsePass};
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::{Sampler, WrapMode2D}, Image}, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::Sampler, Image}, render_graph::ANY_IMAGE};
 
 use super::{luminance::LuminanceMethod, Pass};
 

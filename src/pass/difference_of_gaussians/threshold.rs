@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec4};
+use glam::Vec2;
 
 use crate::{image::{pixel::rgba::Rgba, sampler::Sampler, Image}, pass::SubPass};
 
