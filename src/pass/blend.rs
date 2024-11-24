@@ -1,7 +1,7 @@
 use glam::{Mat2, Vec2};
 use nprs_derive::{FromParsedValue, ParsePass};
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::Sampler, Image}, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::Sampler, Image}, pixel::Rgb, render_graph::ANY_IMAGE};
 
 use super::{luminance::LuminanceMethod, Pass};
 
@@ -35,10 +35,18 @@ pub enum BlendMode {
     /// Add the channel values of the first image with the corresponding channel values of the
     /// second image.
     Add,
+    /// Subtract the channel values of the second image from the corresponding channel values of the
+    /// first image.
+    Subtract,
     /// Multiply the channel values of the first image with the corresponding channel values of the
     /// second image.
     Multiply,
+    Screen,
     Overlay(LuminanceMethod),
+    SoftLight(LuminanceMethod),
+    ColorDodge,
+    ColorBurn,
+    VividLight(LuminanceMethod),
 }
 
 impl Pass for Blend {
@@ -75,12 +83,36 @@ impl Pass for Blend {
 
             let mut col = match self.mode {
                 BlendMode::Add => a + b,
+                BlendMode::Subtract => a - b,
                 BlendMode::Multiply => a * b,
+                BlendMode::Screen => {
+                    (a.invert() * b.invert()).invert()
+                },
                 BlendMode::Overlay(lum) => {
                     if lum.luminance(a.r, a.g, a.b) < 0.5 {
                         a * b * 2.0
                     } else {
                         (a.invert() * b.invert() * 2.0).invert()
+                    }
+                },
+                BlendMode::SoftLight(lum) => {
+                    if lum.luminance(b.r, b.g, b.b) < 0.5 {
+                        a * b * 2.0 + (a * a) * (b * 2.0).invert()
+                    } else {
+                        a * 2.0 * b.invert() + a.sqrt() * (b * 2.0 - Rgb::splat(1.0))
+                    }
+                },
+                BlendMode::ColorDodge => {
+                    (a / (b - Rgb::splat(0.001)).invert()).saturate()
+                },
+                BlendMode::ColorBurn => {
+                    (a.invert() / (b + Rgb::splat(0.001))).invert().saturate()
+                },
+                BlendMode::VividLight(lum) => {
+                    if lum.luminance(b.r, b.g, b.b) <= 0.5 {
+                        (a.invert() / ((b + Rgb::splat(0.001)) * 2.0)).invert()
+                    } else {
+                        a / ((b - Rgb::splat(0.001)).invert() * 2.0)
                     }
                 },
             }.saturate();

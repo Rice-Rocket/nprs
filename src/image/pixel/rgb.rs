@@ -39,6 +39,11 @@ impl Rgb<f32> {
     pub fn is_finite(self) -> bool {
         self.r.is_finite() && self.g.is_finite() && self.b.is_finite()
     }
+
+    #[inline]
+    pub fn sqrt(self) -> Self {
+        Self::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
+    }
 }
 
 impl<F: PixelFormat> Pixel<3> for Rgb<F> {
