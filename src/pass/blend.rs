@@ -38,8 +38,6 @@ pub enum BlendMode {
     /// Multiply the channel values of the first image with the corresponding channel values of the
     /// second image.
     Multiply,
-    /// Multiply the channel values of the first image with the alpha of the second image.
-    AlphaMultiply,
     Overlay(LuminanceMethod),
 }
 
@@ -60,21 +58,24 @@ impl Pass for Blend {
             let pos_a = Mat2::from_scale_angle(1.0 / self.scale_a, -self.rotate_a) * pos.as_vec2();
             let pos_b = Mat2::from_scale_angle(1.0 / self.scale_b, -self.rotate_b) * pos.as_vec2();
 
-            let mut a = im_a.sample_absolute(pos_a, Sampler::LINEAR_REPEAT);
-            let mut b = im_b.sample_absolute(pos_b, Sampler::LINEAR_REPEAT);
+            let mut a_rgba = im_a.sample_absolute(pos_a, Sampler::LINEAR_REPEAT);
+            let mut b_rgba = im_b.sample_absolute(pos_b, Sampler::LINEAR_REPEAT);
 
-            if self.invert_a {
-                a = a.invert();
-            }
+            let a = if self.invert_a {
+                a_rgba.rgb().invert()
+            } else {
+                a_rgba.rgb()
+            };
 
-            if self.invert_b {
-                b = b.invert();
-            }
+            let b = if self.invert_b {
+                b_rgba.rgb().invert()
+            } else {
+                b_rgba.rgb()
+            };
 
             let mut col = match self.mode {
                 BlendMode::Add => a + b,
                 BlendMode::Multiply => a * b,
-                BlendMode::AlphaMultiply => a * b.a,
                 BlendMode::Overlay(lum) => {
                     if lum.luminance(a.r, a.g, a.b) < 0.5 {
                         a * b * 2.0
@@ -88,7 +89,11 @@ impl Pass for Blend {
                 col = col.invert();
             }
 
-            *pixel = a + (col - a) * self.strength;
+            let final_col = a + (col - a) * self.strength;
+            pixel.r = final_col.r;
+            pixel.g = final_col.g;
+            pixel.b = final_col.b;
+            pixel.a = a_rgba.a;
         })
     }
 }

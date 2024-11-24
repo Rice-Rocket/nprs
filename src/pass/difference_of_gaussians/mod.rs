@@ -196,6 +196,14 @@ impl Pass for DifferenceOfGaussians {
 
         self.blur1.apply_subpass(target, &[source, tfm]);
         self.threshold.apply_subpass(target, &[tfm]);
+        self.aa.apply_subpass(target, &[tfm]);
+
+        target.for_each(|pixel| {
+            pixel.r = pixel.a;
+            pixel.g = pixel.a;
+            pixel.b = pixel.a;
+            pixel.a = 1.0;
+        })
     }
 }
 

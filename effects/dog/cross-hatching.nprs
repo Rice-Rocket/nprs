@@ -10,7 +10,7 @@ base_dog = DifferenceOfGaussians {
     invert: false,
 };
 base_blend = Blend {
-    mode: AlphaMultiply,
+    mode: Multiply,
     scale_a: Vec2 (0.2, 0.2),
     invert_a: true,
     invert_b: true,
