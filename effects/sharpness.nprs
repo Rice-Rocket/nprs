@@ -1,0 +1,7 @@
+sharpness := Sharpness {
+    amount: *amount | 1.0,
+};
+
+sharpness -> source;
+
+sharpness!

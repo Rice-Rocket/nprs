@@ -11,6 +11,7 @@ mod difference_of_gaussians;
 mod blend;
 mod texture;
 mod bloom;
+mod sharpness;
 
 /// A render pass that represents a node in the render graph.
 pub trait Pass {
