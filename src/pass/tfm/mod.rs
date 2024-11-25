@@ -26,7 +26,7 @@ impl TangentFlowMap {
         Self {
             sobel_pre_blur: BoxBlur::new(pre_blur_kernel_size),
             sobel: Sobel,
-            sobel_post_blur: GaussianBlur::new(post_blur_sigma),
+            sobel_post_blur: GaussianBlur::new(post_blur_sigma, (post_blur_sigma * 2.45).floor() as usize),
             structure_tensor: TangentFlowStructureTensor,
         }
     }

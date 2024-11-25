@@ -17,8 +17,8 @@ pub struct GaussianBlur {
 }
 
 impl GaussianBlur {
-    pub fn new(sigma: f32) -> Self {
-        let kernel_size = 2 * (sigma * 2.45).floor() as usize + 1;
+    pub fn new(sigma: f32, kernel_radius: usize) -> Self {
+        let kernel_size = 2 * kernel_radius + 1;
 
         let mut kernel = Vec::new();
         let mut kernel_sum = 0.0;
@@ -68,10 +68,12 @@ fn gaussian(sigma: f32, x: f32, y: f32) -> f32 {
 #[derive(FromParsedValue)]
 pub struct GaussianBlurBuilder {
     sigma: f32,
+    #[nprs(default = (__sigma * 2.45).floor() as usize)]
+    kernel_radius: usize,
 }
 
 impl From<GaussianBlurBuilder> for GaussianBlur {
     fn from(builder: GaussianBlurBuilder) -> Self {
-        GaussianBlur::new(builder.sigma)
+        GaussianBlur::new(builder.sigma, builder.kernel_radius)
     }
 }

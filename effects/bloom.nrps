@@ -1,0 +1,15 @@
+bloom := Bloom {
+    lum: Standard,
+    threshold: *threshold | 0.8,
+    sigma: *sigma | 5.0,
+    intensity: *intensity | 1.0,
+};
+
+blend := Blend {
+    mode: Add,
+};
+
+bloom -> source;
+blend -> source, bloom;
+
+blend!

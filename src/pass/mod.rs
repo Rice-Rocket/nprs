@@ -10,6 +10,7 @@ mod voronoi;
 mod difference_of_gaussians;
 mod blend;
 mod texture;
+mod bloom;
 
 /// A render pass that represents a node in the render graph.
 pub trait Pass {
@@ -26,6 +27,8 @@ pub trait Pass {
 
 pub trait SubPass {
     /// Apply this [`SubPass`] to the `target` image, given the requisite auxiliary images.
+    ///
+    /// [`SubPass`]es tend to perform their operation in-place.
     fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]);
 }
 
