@@ -1,0 +1,18 @@
+recolor := Recolor {
+    palette: Generate {
+        palette_size: 8,
+        seed: 9,
+        hue: Fixed(0.8),
+        hue_contrast: Fixed(0.3),
+        luminance: Range(0.1, 0.2),
+        luminance_contrast: Range(0.7, 0.9),
+        chroma: Range(0.3, 0.4),
+        chroma_contrast: Range(0.2, 0.3),
+        hue_mode: 3,
+    },
+    mode: Luminance(Perceived),
+};
+
+recolor -> source;
+
+recolor!

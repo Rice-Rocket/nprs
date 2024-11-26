@@ -169,7 +169,7 @@ fn expand_unnamed_fields(ident: TokenStream, unnamed_fields: Vec<InputField>) ->
     Ok(quote! {
         #collect_fields
 
-        ::nprs::__private::Result::Ok(#ident(#(#filled_fields)*))
+        ::nprs::__private::Result::Ok(#ident(#(#filled_fields),*))
     })
 }
 
