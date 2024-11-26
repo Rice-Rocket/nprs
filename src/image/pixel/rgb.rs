@@ -44,6 +44,16 @@ impl Rgb<f32> {
     pub fn sqrt(self) -> Self {
         Self::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
     }
+
+    #[inline]
+    pub fn min(self, other: Self) -> Self {
+        Self::new(self.r.min(other.r), self.g.min(other.g), self.b.min(other.b))
+    }
+
+    #[inline]
+    pub fn max(self, other: Self) -> Self {
+        Self::new(self.r.max(other.r), self.g.max(other.g), self.b.max(other.b))
+    }
 }
 
 impl<F: PixelFormat> Pixel<3> for Rgb<F> {

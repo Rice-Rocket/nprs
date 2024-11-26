@@ -1,0 +1,7 @@
+sharpness := ContrastAdaptiveSharpness {
+    amount: *amount | 0.1,
+};
+
+sharpness -> source;
+
+sharpness!
