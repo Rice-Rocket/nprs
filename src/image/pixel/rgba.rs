@@ -29,6 +29,11 @@ impl<F: PixelFormat> Rgba<F> {
     }
 
     #[inline]
+    pub fn rg(self) -> LumaAlpha<F> {
+        LumaAlpha { v: self.r, a: self.g }
+    }
+
+    #[inline]
     pub fn rgb(self) -> Rgb<F> {
         Rgb::new(self.r, self.g, self.b)
     }

@@ -13,6 +13,7 @@ mod texture;
 mod bloom;
 mod sharpness;
 mod recolor;
+mod ascii;
 
 /// A render pass that represents a node in the render graph.
 pub trait Pass {

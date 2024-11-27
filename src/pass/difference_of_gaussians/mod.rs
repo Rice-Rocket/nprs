@@ -13,6 +13,7 @@ use super::{tfm::TangentFlowMap, Pass, SubPass};
 mod blur1;
 mod threshold;
 mod aa;
+pub mod simple;
 
 #[derive(ParsePass, FromParsedValue)]
 #[nprs(from = DifferenceOfGaussiansBuilder)]

@@ -1,0 +1,29 @@
+ascii := Ascii {
+    fill_im: "textures/ascii-fill.png",
+    edge_im: "textures/ascii-edges.png",
+    edge_threshold: 0.0,
+    edge_count_threshold: 8,
+    dog: BasicDifferenceOfGaussians {
+        kernel_size: 15,
+        stdev: 5.0,
+        stdev_scale: 1.2,
+        white_point: 0.01,
+    },
+};
+
+bloom := Bloom {
+    lum: Standard,
+    threshold: 0.8,
+    sigma: 3.0,
+    intensity: 1.0,
+};
+
+bloom_blend := Blend {
+    mode: Add,
+};
+
+ascii -> source;
+bloom -> ascii;
+bloom_blend -> ascii, bloom;
+
+bloom_blend!

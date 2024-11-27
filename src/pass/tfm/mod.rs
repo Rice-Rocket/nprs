@@ -2,11 +2,11 @@ use nprs_derive::{FromParsedValue, ParsePass};
 use sobel::Sobel;
 use structure_tensor::TangentFlowStructureTensor;
 
-use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::MAIN_IMAGE};
+use crate::{image::{pixel::rgba::Rgba, Image}, render_graph::{ANY_IMAGE, MAIN_IMAGE}};
 
 use super::{blur::{box_blur::BoxBlur, gaussian_blur::GaussianBlur}, Pass, SubPass};
 
-mod sobel;
+pub mod sobel;
 mod structure_tensor;
 
 #[derive(ParsePass, FromParsedValue)]
@@ -38,7 +38,7 @@ impl Pass for TangentFlowMap {
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
-        vec![MAIN_IMAGE]
+        vec![ANY_IMAGE]
     }
 
     fn apply(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {

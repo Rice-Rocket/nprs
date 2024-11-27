@@ -1,7 +1,7 @@
 use glam::{Mat2, Vec2};
 use nprs_derive::{FromParsedValue, ParsePass};
 
-use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::Sampler, Image}, pixel::Rgb, render_graph::ANY_IMAGE};
+use crate::{image::{pixel::{rgba::Rgba, Pixel}, sampler::Sampler, Image}, pixel::Rgb, render_graph::ANY_IMAGE, SubPass};
 
 use super::{luminance::LuminanceMethod, Pass};
 
@@ -30,6 +30,22 @@ pub struct Blend {
     strength: f32,
 }
 
+impl Default for Blend {
+    fn default() -> Self {
+        Self {
+            mode: BlendMode::Add,
+            rotate_a: 0.0,
+            rotate_b: 0.0,
+            scale_a: Vec2::ONE,
+            scale_b: Vec2::ONE,
+            invert_a: false,
+            invert_b: false,
+            invert: false,
+            strength: 1.0,
+        }
+    }
+}
+
 #[derive(FromParsedValue)]
 pub enum BlendMode {
     /// Add the channel values of the first image with the corresponding channel values of the
@@ -47,6 +63,15 @@ pub enum BlendMode {
     ColorDodge,
     ColorBurn,
     VividLight(LuminanceMethod),
+}
+
+impl Blend {
+    pub fn from_mode(mode: BlendMode) -> Self {
+        Self {
+            mode,
+            ..Self::default()
+        }
+    }
 }
 
 impl Pass for Blend {
@@ -127,5 +152,13 @@ impl Pass for Blend {
             pixel.b = final_col.b;
             pixel.a = a_rgba.a;
         })
+    }
+}
+
+impl SubPass for Blend {
+    fn apply_subpass(&self, target: &mut Image<4, f32, Rgba<f32>>, aux_images: &[&Image<4, f32, Rgba<f32>>]) {
+        // TODO: unnecessary clone here
+        let im_a = target.clone();
+        self.apply(target, &[&im_a, aux_images[0]]);
     }
 }

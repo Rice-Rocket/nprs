@@ -83,6 +83,16 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         self.pixels[(p.y * self.resolution.x + p.x) as usize]
     }
 
+    pub fn get(&self, p: UVec2) -> &P {
+        assert!(p.x < self.resolution.x && p.y < self.resolution.y);
+        &self.pixels[(p.y * self.resolution.x + p.x) as usize]
+    }
+
+    pub fn get_mut(&mut self, p: UVec2) -> &mut P {
+        assert!(p.x < self.resolution.x && p.y < self.resolution.y);
+        &mut self.pixels[(p.y * self.resolution.x + p.x) as usize]
+    }
+
     pub fn store(&mut self, p: UVec2, c: P) {
         assert!(p.x < self.resolution.x && p.y < self.resolution.y);
         self.pixels[(p.y * self.resolution.x + p.x) as usize] = c;
@@ -151,6 +161,42 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
             .enumerate()
             .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x).as_vec2() / self.resolution.as_vec2()))
             .for_each(|(pixel, uv)| f(pixel, uv));
+    }
+
+    pub fn iter_pixels(&self) -> impl Iterator<Item = &P> {
+        self.pixels.iter()
+    }
+
+    pub fn iter_pixels_with_positions(&self) -> impl Iterator<Item = (&P, UVec2)> {
+        self.pixels
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
+    }
+
+    pub fn iter_pixels_with_uvs(&self) -> impl Iterator<Item = (&P, Vec2)> {
+        self.pixels
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x).as_vec2() / self.resolution.as_vec2()))
+    }
+
+    pub fn par_iter_pixels(&self) -> impl ParallelIterator<Item = &P> {
+        self.pixels.par_iter()
+    }
+
+    pub fn par_iter_pixels_with_positions(&self) -> impl ParallelIterator<Item = (&P, UVec2)> {
+        self.pixels
+            .par_iter()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x)))
+    }
+
+    pub fn par_iter_pixels_with_uvs(&self) -> impl ParallelIterator<Item = (&P, Vec2)> {
+        self.pixels
+            .par_iter()
+            .enumerate()
+            .map(|(i, p)| (p, UVec2::new(i as u32 % self.resolution.x, i as u32 / self.resolution.x).as_vec2() / self.resolution.as_vec2()))
     }
 
     pub fn to_format<ToFormat: PixelFormat, ToPixel: Pixel<CHANNELS, Format = ToFormat>>(&self) -> Image<CHANNELS, ToFormat, ToPixel> {
