@@ -22,8 +22,24 @@ bloom_blend := Blend {
     mode: Add,
 };
 
+color := Texture(Constant(Rgb { r: 0.471, g: 0.80, b: 0.408 }));
+
+color_blend := Blend {
+    mode: Multiply
+};
+
+crt := Crt {
+    curvature: 5.0,
+    line_strength: 3.0,
+    line_size: 1,
+    vignette_width: 50.0,
+    line_brightness: 1.2,
+};
+
 ascii -> source;
 bloom -> ascii;
 bloom_blend -> ascii, bloom;
+color_blend -> bloom_blend, color;
+crt -> color_blend;
 
-bloom_blend!
+crt!

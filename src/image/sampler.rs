@@ -11,6 +11,8 @@ impl Sampler {
     pub const NEAREST_CLAMP: Sampler = Sampler { wrap_mode: WrapMode2D::CLAMP, filter: Filter::NearestNeighbor };
     pub const LINEAR_REPEAT: Sampler = Sampler { wrap_mode: WrapMode2D::REPEAT, filter: Filter::Linear };
     pub const NEAREST_REPEAT: Sampler = Sampler { wrap_mode: WrapMode2D::REPEAT, filter: Filter::NearestNeighbor };
+    pub const LINEAR_BLACK: Sampler = Sampler { wrap_mode: WrapMode2D::BLACK, filter: Filter::Linear };
+    pub const NEAREST_BLACK: Sampler = Sampler { wrap_mode: WrapMode2D::BLACK, filter: Filter::NearestNeighbor };
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
