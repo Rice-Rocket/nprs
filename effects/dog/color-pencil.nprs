@@ -17,9 +17,7 @@ base_blend = Blend {
     invert: true,
 };
 
-hatching := Texture {
-    im: "textures/hatching.png",
-};
+hatching := Texture(Image("textures/hatching.png"));
 
 luminance := Luminance {
     method: Standard,
@@ -102,9 +100,7 @@ final_hatch := Blend {
     mode: Multiply,
 };
 
-paper := Texture {
-    im: "textures/paper.png",
-};
+paper := Texture(Image("textures/paper.png"));
 
 layer_paper := Blend {
     mode: Multiply,
