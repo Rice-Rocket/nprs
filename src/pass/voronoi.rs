@@ -1,6 +1,7 @@
 use glam::{IVec2, Vec2, Vec3};
 use nprs_derive::{FromParsedValue, ParsePass};
 use rand::Rng;
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use voronoi::Point;
 
 use crate::{image::{pixel::rgba::Rgba, sampler::{Sampler, WrapMode2D}, Image}, pass::{luminance::Luminance, tfm::TangentFlowMap}, render_graph::ANY_IMAGE};
@@ -241,23 +242,19 @@ impl Pass for RelaxedVoronoi {
             let vor_diagram = voronoi::voronoi(seeds, res.x as f64);
             let faces = voronoi::make_polygons(&vor_diagram);
 
-            let mut new_points = Vec::new();
-            for face in faces {
+            seeds = Vec::new();
+            faces.into_par_iter().map(|face| {
                 let poly = UnsortedPolygon::from_face(face);
                 let sorted_poly = poly.sort();
-                let cr = weighted_centroid(
+                weighted_centroid(
                     &sorted_poly,
                     res.x as f32,
                     weights,
                     self.invert,
                     self.weight_scale,
                     self.relax_mode == VoronoiRelaxWeightMode::Luminance,
-                );
-
-                new_points.push(cr);
-            }
-
-            seeds = new_points;
+                )
+            }).collect_into_vec(&mut seeds);
         }
 
         match self.mode {

@@ -1,0 +1,18 @@
+mosaic := RelaxedVoronoi {
+    points: *points | 10000,
+    relax_iterations: 20,
+    relax_mode: Frequency,
+    mode: Mosaic,
+    weight_scale: 0.5,
+    invert: false,
+};
+
+tfm := TangentFlowMap {
+    pre_blur_kernel_size: 1,
+    post_blur_sigma: 5.0,
+};
+
+tfm -> source;
+mosaic -> source, tfm;
+
+mosaic!

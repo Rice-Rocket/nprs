@@ -1,5 +1,5 @@
 stipple := RelaxedVoronoi {
-    points: 100000,
+    points: *points | 100000,
     relax_iterations: 50,
     relax_mode: Luminance,
     mode: Stippling {
