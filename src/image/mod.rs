@@ -93,6 +93,14 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
         &mut self.pixels[(p.y * self.resolution.x + p.x) as usize]
     }
 
+    pub fn get_mut_wrapped(&mut self, p: IVec2, wrap_mode: WrapMode2D) -> Option<&mut P> {
+        if let Some(p) = wrap_mode.remap(p, self.resolution.as_ivec2()) {
+            Some(&mut self.pixels[(p.y * self.resolution.x + p.x) as usize])
+        } else {
+            None
+        }
+    }
+
     pub fn store(&mut self, p: UVec2, c: P) {
         assert!(p.x < self.resolution.x && p.y < self.resolution.y);
         self.pixels[(p.y * self.resolution.x + p.x) as usize] = c;
@@ -211,23 +219,6 @@ impl<const CHANNELS: usize, F: PixelFormat, P: Pixel<CHANNELS, Format = F>> Imag
                 Err(_) => ToPixel::from_channels([ToFormat::from_scaled_float(0.0); CHANNELS]),
             }
         })
-    }
-
-    // TODO: blend modes
-    pub fn blit(&mut self, im: Image<CHANNELS, F, P>, position: UVec2) {
-        for x in 0..im.resolution.x {
-            for y in 0..im.resolution.y {
-                let p = UVec2::new(x, y);
-                let pi = position.as_ivec2() + p.as_ivec2() - im.resolution.as_ivec2() / 2;
-
-                if pi.x < 0 || pi.x >= self.resolution.x as i32 || pi.y < 0 || pi.y >= self.resolution.y as i32 {
-                    continue;
-                }
-
-                let pixel = im.load(p);
-                self.store(pi.as_uvec2(), pixel);
-            }
-        }
     }
 
     pub fn read<S: AsRef<Path>>(path: S) -> Result<Image<CHANNELS, F, P>, ImageError> {

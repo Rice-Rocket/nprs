@@ -30,6 +30,13 @@ pub enum VoronoiMode {
 
         /// The radius of the stippled dots.
         stipple_radius: f32,
+
+        /// The smoothness of the stippled dots.
+        ///
+        /// A value of `1.0` is usually sufficient for proper anti-aliasing, but more may be
+        /// desired if there are a lot of points.
+        #[nprs(default = 1.0)]
+        stipple_smoothing: f32,
     },
     /// Treat voronoi regions as tiles of a mosaic, coloring them based on the original image. 
     /// The sharpness of edges can be controlled by changing the standard deviation of the
@@ -79,6 +86,7 @@ impl RelaxedVoronoi {
                 background: Rgba::new(1.0, 1.0, 1.0, 1.0),
                 stipple: Rgba::new(0.0, 0.0, 0.0, 1.0),
                 stipple_radius: 1.0,
+                stipple_smoothing: 1.0,
             },
             weight_scale: 10.0,
             invert: true,
@@ -102,11 +110,7 @@ impl RelaxedVoronoi {
     ///
     /// Defaults to `Rgba(1.0, 1.0, 1.0, 1.0)`
     pub fn background_color(mut self, color: Rgba<f32>) -> Self {
-        if let VoronoiMode::Stippling {
-            background,
-            stipple: _,
-            stipple_radius: _,
-        } = &mut self.mode {
+        if let VoronoiMode::Stippling { background, .. } = &mut self.mode {
             *background = color;
         }
 
@@ -117,11 +121,7 @@ impl RelaxedVoronoi {
     ///
     /// Defaults to `Rgba(0.0, 0.0, 0.0, 1.0)`
     pub fn stipple_color(mut self, color: Rgba<f32>) -> Self {
-        if let VoronoiMode::Stippling {
-            background: _,
-            stipple,
-            stipple_radius: _,
-        } = &mut self.mode {
+        if let VoronoiMode::Stippling { stipple, .. } = &mut self.mode {
             *stipple = color;
         }
 
@@ -132,11 +132,7 @@ impl RelaxedVoronoi {
     ///
     /// Defaults to `1.0`
     pub fn stipple_radius(mut self, radius: f32) -> Self {
-        if let VoronoiMode::Stippling {
-            background: _,
-            stipple: _,
-            stipple_radius,
-        } = &mut self.mode {
+        if let VoronoiMode::Stippling { stipple_radius, .. } = &mut self.mode {
             *stipple_radius = radius;
         }
 
@@ -269,22 +265,34 @@ impl Pass for RelaxedVoronoi {
                 background,
                 stipple,
                 stipple_radius,
+                stipple_smoothing,
             } => {
                 *target = Image::new_fill(target.resolution(), background);
 
                 // Draw relaxed centroids
-                for p in seeds {
-                    let p = Vec2::new(f64::try_from(p.x).unwrap() as f32, f64::try_from(p.y).unwrap() as f32);
+                for seed in seeds {
+                    let seed = Vec2::new(f64::try_from(seed.x).unwrap() as f32, f64::try_from(seed.y).unwrap() as f32);
 
-                    // TODO: Antialiased circle
-                    for x in (p.x - stipple_radius).floor() as i32..(p.x + stipple_radius).ceil() as i32 {
-                        for y in (p.y - stipple_radius).floor() as i32..(p.y + stipple_radius).ceil() as i32 {
-                            if p.distance_squared(Vec2::new(x as f32, y as f32)) < stipple_radius * stipple_radius {
-                                target.store_wrapped(IVec2::new(x, y), stipple);
+                    for x in (seed.x - stipple_radius).floor() as i32 - 1..(seed.x + stipple_radius).ceil() as i32 + 1 {
+                        for y in (seed.y - stipple_radius).floor() as i32 - 1..(seed.y + stipple_radius).ceil() as i32 + 1 {
+                            let pos = Vec2::new(x as f32, y as f32) - seed;
+
+                            const PIXEL_SIZE: f32 = std::f32::consts::SQRT_2;
+                            let d = pos.length() - stipple_radius;
+
+                            let mut alpha = (1.0 - d) + (1.0 - PIXEL_SIZE * stipple_smoothing) * d;
+                            alpha *= stipple.a;
+                            
+                            if let Some(pixel) = target.get_mut_wrapped(IVec2::new(x, y), WrapMode2D::BLACK) {
+                                pixel.r = pixel.r * (1.0 - alpha) + (stipple.r - pixel.r) * alpha;
+                                pixel.g = pixel.g * (1.0 - alpha) + (stipple.g - pixel.g) * alpha;
+                                pixel.b = pixel.b * (1.0 - alpha) + (stipple.b - pixel.b) * alpha;
                             }
                         }
                     }
                 }
+
+                target.for_each(|pixel| *pixel = pixel.saturate());
             },
             VoronoiMode::Mosaic => {
                 // Draw voronoi regions based on relaxed centroids

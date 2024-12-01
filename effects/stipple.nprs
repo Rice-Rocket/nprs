@@ -1,0 +1,31 @@
+stipple := RelaxedVoronoi {
+    points: 100000,
+    relax_iterations: 50,
+    relax_mode: Luminance,
+    mode: Stippling {
+        background: Rgba(1.0, 1.0, 1.0, 1.0),
+        stipple: RgbU8(7, 5, 4),
+        stipple_radius: 0.5,
+        stipple_smoothing: 2.0,
+    },
+    weight_scale: 50.0,
+    invert: true,
+};
+
+lum := Luminance {
+    method: Standard,
+};
+
+paper := Texture(Image("textures/paper.png"));
+
+layer_paper := Blend {
+    mode: Multiply,
+    scale_b: Vec2 (1.0, 1.0),
+    strength: 0.2,
+};
+
+lum -> source;
+stipple -> source, lum;
+layer_paper -> stipple, paper;
+
+layer_paper!
