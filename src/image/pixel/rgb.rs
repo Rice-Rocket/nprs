@@ -3,9 +3,10 @@ use nprs_derive::FromParsedValue;
 
 use crate::image::format::PixelFormat;
 
-use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, FromPixel, Pixel};
+use super::{luma::Luma, luma_alpha::LumaAlpha, rgba::Rgba, Color, FromPixel, Pixel};
 
 #[derive(FromParsedValue, Clone, Copy, Debug)]
+#[nprs(from = Color)]
 pub struct Rgb<F: PixelFormat> {
     pub r: F,
     pub g: F,
@@ -118,6 +119,29 @@ impl<F: PixelFormat> FromPixel<Rgba<F>> for Rgb<F> {
             r: F::from_scaled_float(r * a),
             g: F::from_scaled_float(g * a),
             b: F::from_scaled_float(b * a),
+        }
+    }
+}
+
+impl<F: PixelFormat> From<Color> for Rgb<F> {
+    fn from(value: Color) -> Self {
+        match value {
+            Color::Luma(..) => Rgb::<F>::from_pixel(Luma::<F>::from(value)),
+            Color::LumaU8(..) => Rgb::<F>::from_pixel(Luma::<F>::from(value)),
+            Color::Rg(..) => Rgb::<F>::from_pixel(LumaAlpha::<F>::from(value)),
+            Color::RgU8(..) => Rgb::<F>::from_pixel(LumaAlpha::<F>::from(value)),
+            Color::Rgb(r, g, b) => Rgb {
+                r: F::from_scaled_float(r),
+                g: F::from_scaled_float(g),
+                b: F::from_scaled_float(b),
+            },
+            Color::RgbU8(r, g, b) => Rgb {
+                r: F::from_scaled_float(r.to_scaled_float()),
+                g: F::from_scaled_float(g.to_scaled_float()),
+                b: F::from_scaled_float(b.to_scaled_float()),
+            },
+            Color::Rgba(..) => Rgb::<F>::from_pixel(Rgba::<F>::from(value)),
+            Color::RgbaU8(..) => Rgb::<F>::from_pixel(Rgba::<F>::from(value)),
         }
     }
 }

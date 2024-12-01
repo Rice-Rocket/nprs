@@ -2,9 +2,9 @@ use thiserror::Error;
 
 use crate::{image::{pixel::rgba::Rgba, Image}, parser::{interpreter::ParsedValue, ParseValueError}};
 
-mod tfm;
+pub mod tfm;
+pub mod luminance;
 mod blur;
-mod luminance;
 mod kuwahara;
 mod voronoi;
 mod difference_of_gaussians;

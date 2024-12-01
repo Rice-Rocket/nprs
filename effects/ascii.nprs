@@ -22,7 +22,7 @@ bloom_blend := Blend {
     mode: Add,
 };
 
-color := Texture(Constant(Rgb { r: 0.471, g: 0.80, b: 0.408 }));
+color := Texture(Constant(*color | Rgb(0.471, 0.80, 0.408)));
 
 color_blend := Blend {
     mode: Multiply

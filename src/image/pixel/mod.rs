@@ -2,6 +2,7 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use luma::Luma;
 use luma_alpha::LumaAlpha;
+use nprs_derive::FromParsedValue;
 use rgb::Rgb;
 use rgba::Rgba;
 
@@ -41,4 +42,16 @@ pub trait Pixel<const CHANNELS: usize>:
 
 pub trait FromPixel<T> {
     fn from_pixel(pixel: T) -> Self;
+}
+
+#[derive(FromParsedValue)]
+pub enum Color {
+    Luma(f32),
+    LumaU8(u8),
+    Rg(f32, f32),
+    RgU8(u8, u8),
+    Rgb(f32, f32, f32),
+    RgbU8(u8, u8, u8),
+    Rgba(f32, f32, f32, f32),
+    RgbaU8(u8, u8, u8, u8),
 }
