@@ -8,12 +8,12 @@ use crate::{pixel::{Rgb, Rgba}, render_graph::ANY_IMAGE, Image, Pass};
 use super::luminance::LuminanceMethod;
 
 #[derive(ParsePass, FromParsedValue)]
-pub struct Recolor {
-    palette: RecolorPalette,
-    mode: RecolorMode,
+pub struct PaletteSwap {
+    palette: PaletteSwapColors,
+    mode: PalleteSwapMode,
 }
 
-impl Pass for Recolor {
+impl Pass for PaletteSwap {
     fn name(&self) -> &'static str {
         Self::PASS_NAME
     }
@@ -36,43 +36,43 @@ impl Pass for Recolor {
 }
 
 #[derive(FromParsedValue)]
-pub enum RecolorMode {
+pub enum PalleteSwapMode {
     Luminance(LuminanceMethod),
 }
 
-impl RecolorMode {
+impl PalleteSwapMode {
     fn map(&self, col: Rgb<f32>) -> f32 {
         match self {
-            RecolorMode::Luminance(lum) => lum.luminance(col.r, col.g, col.b),
+            PalleteSwapMode::Luminance(lum) => lum.luminance(col.r, col.g, col.b),
         }
     }
 }
 
 #[derive(FromParsedValue)]
-#[nprs(from = RecolorPaletteBuilder)]
-pub struct RecolorPalette {
+#[nprs(from = PaletteSwapColorsBuilder)]
+pub struct PaletteSwapColors {
     colors: Vec<Rgb<f32>>,
 }
 
-impl RecolorPalette {
+impl PaletteSwapColors {
     fn new_fixed(
         colors: Vec<Rgb<f32>>,
-    ) -> RecolorPalette {
-        RecolorPalette { colors }
+    ) -> PaletteSwapColors {
+        PaletteSwapColors { colors }
     }
 
     #[allow(clippy::too_many_arguments)]
     fn generate(
         palette_size: u32,
         seed: u32,
-        hue: RecolorChannelMode,
-        hue_contrast: RecolorChannelMode,
-        luminance: RecolorChannelMode,
-        luminance_contrast: RecolorChannelMode,
-        chroma: RecolorChannelMode,
-        chroma_contrast: RecolorChannelMode,
+        hue: PaletteSwapChannelMode,
+        hue_contrast: PaletteSwapChannelMode,
+        luminance: PaletteSwapChannelMode,
+        luminance_contrast: PaletteSwapChannelMode,
+        chroma: PaletteSwapChannelMode,
+        chroma_contrast: PaletteSwapChannelMode,
         hue_mode: u32
-    ) -> RecolorPalette {
+    ) -> PaletteSwapColors {
         let base_hue = hue.get_color(seed) * 2.0 * PI;
         let hue_contrast = hue_contrast.get_color(seed + 2);
         let base_lum = luminance.get_color(seed + 13);
@@ -98,7 +98,7 @@ impl RecolorPalette {
             colors.push(oklch_to_rgb(lum_offset, chroma_offset, base_hue + hue_offset));
         }
 
-        RecolorPalette { colors }
+        PaletteSwapColors { colors }
     }
 
     fn size(&self) -> usize {
@@ -152,39 +152,39 @@ fn oklch_to_rgb(l: f32, c: f32, h: f32) -> Rgb<f32> {
 }
 
 #[derive(FromParsedValue)]
-enum RecolorChannelMode {
+enum PaletteSwapChannelMode {
     Fixed(f32),
     Range(f32, f32),
 }
 
-impl RecolorChannelMode {
+impl PaletteSwapChannelMode {
     fn get_color(self, seed: u32) -> f32 {
         match self {
-            RecolorChannelMode::Fixed(v) => v.clamp(0.0, 1.0),
-            RecolorChannelMode::Range(min, max) => mix(min, max, hash(seed)).clamp(0.0, 1.0),
+            PaletteSwapChannelMode::Fixed(v) => v.clamp(0.0, 1.0),
+            PaletteSwapChannelMode::Range(min, max) => mix(min, max, hash(seed)).clamp(0.0, 1.0),
         }
     }
 }
 
 #[derive(FromParsedValue)]
-enum RecolorPaletteBuilder {
+enum PaletteSwapColorsBuilder {
     Generate {
         palette_size: u32,
         seed: u32,
-        hue: RecolorChannelMode,
-        hue_contrast: RecolorChannelMode,
-        luminance: RecolorChannelMode,
-        luminance_contrast: RecolorChannelMode,
-        chroma: RecolorChannelMode,
-        chroma_contrast: RecolorChannelMode,
+        hue: PaletteSwapChannelMode,
+        hue_contrast: PaletteSwapChannelMode,
+        luminance: PaletteSwapChannelMode,
+        luminance_contrast: PaletteSwapChannelMode,
+        chroma: PaletteSwapChannelMode,
+        chroma_contrast: PaletteSwapChannelMode,
         hue_mode: u32
     },
 }
 
-impl From<RecolorPaletteBuilder> for RecolorPalette {
-    fn from(value: RecolorPaletteBuilder) -> Self {
+impl From<PaletteSwapColorsBuilder> for PaletteSwapColors {
+    fn from(value: PaletteSwapColorsBuilder) -> Self {
         match value {
-            RecolorPaletteBuilder::Generate {
+            PaletteSwapColorsBuilder::Generate {
                 palette_size,
                 seed,
                 hue,
@@ -194,7 +194,7 @@ impl From<RecolorPaletteBuilder> for RecolorPalette {
                 chroma,
                 chroma_contrast,
                 hue_mode,
-            } => RecolorPalette::generate(
+            } => PaletteSwapColors::generate(
                 palette_size,
                 seed,
                 hue,

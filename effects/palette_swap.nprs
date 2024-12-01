@@ -1,4 +1,4 @@
-recolor := Recolor {
+palette_swap := PaletteSwap {
     palette: Generate {
         palette_size: 8,
         seed: 9,
@@ -13,6 +13,6 @@ recolor := Recolor {
     mode: Luminance(Perceived),
 };
 
-recolor -> source;
+palette_swap -> source;
 
-recolor!
+palette_swap!

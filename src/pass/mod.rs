@@ -12,7 +12,7 @@ mod blend;
 mod texture;
 mod bloom;
 mod sharpness;
-mod recolor;
+mod palette_swap;
 mod ascii;
 mod crt;
 
